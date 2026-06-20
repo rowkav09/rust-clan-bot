@@ -1,0 +1,6 @@
+node_modules/
+.env
+data/*.json
+
+# Keep template files
+!data/*.example.json

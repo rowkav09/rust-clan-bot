@@ -1,0 +1,11 @@
+{
+  "wipeStart": null,
+  "wipeEnd": null,
+  "wipeNumber": 1,
+  "serverName": "Unconfigured Server",
+  "mapSeed": null,
+  "mapSize": 3500,
+  "battlemetricsServerId": null,
+  "currentRaids": [],
+  "raidHistory": []
+}
