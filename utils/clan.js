@@ -27,6 +27,7 @@ function defaultMember(user) {
     promoted: false, // has been auto-promoted Recruit -> Member
     steamId: null, // linked SteamID64
     steamRustHours: null, // verified Rust hours from Steam
+    idPosted: false, // whether their ID card has been posted to the ID channel
     vcHours: 0, // total voice-channel hours (active, non-AFK)
     vcCurrentWipe: 0, // voice hours this wipe
     vcJoinedAt: null, // timestamp of current counting voice session
@@ -262,7 +263,16 @@ async function logIdLink(client, user, result) {
     .success('🆔 ID linked', `<@${user.id}> linked their account.\n${lines.join('\n')}`)
     .setThumbnail(user.displayAvatarURL?.() || null);
 
-  await channel.send({ content: `<@${user.id}>`, embeds: [embed] }).catch(() => {});
+  const sent = await channel.send({ content: `<@${user.id}>`, embeds: [embed] }).catch(() => null);
+
+  // Remember we've posted this member's card so /verify-sync won't duplicate it.
+  if (sent) {
+    const members = db.read('members');
+    if (members[user.id] && !members[user.id].idPosted) {
+      members[user.id].idPosted = true;
+      db.write('members', members);
+    }
+  }
 }
 
 /** Send an embed (and optional components) to the configured log channel. */

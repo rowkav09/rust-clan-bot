@@ -6,21 +6,6 @@ const embeds = require('../../utils/embeds');
 const clan = require('../../utils/clan');
 const { requireTier, TIER, getTier, getConfig } = require('../../utils/permissions');
 
-/** Split an array of lines into messages under Discord's embed-description limit. */
-function chunkLines(lines, max = 3500) {
-  const chunks = [];
-  let buf = '';
-  for (const line of lines) {
-    if ((buf + line + '\n').length > max) {
-      chunks.push(buf);
-      buf = '';
-    }
-    buf += line + '\n';
-  }
-  if (buf) chunks.push(buf);
-  return chunks;
-}
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('verify-sync')
@@ -61,12 +46,13 @@ module.exports = {
       }
     }
 
-    // ── 2. Sync all linked SteamIDs to the ID channel ──────────────────
+    // ── 2. Post an ID card for each linked member not yet in the channel ─
     const linked = Object.entries(members)
       .filter(([, m]) => m.steamId)
       .sort((a, b) => (a[1].ingameName || a[1].username || '').localeCompare(b[1].ingameName || b[1].username || ''));
 
     let synced = 0;
+    let skipped = 0;
     let channelNote = '';
     const idChannel = await clan.fetchChannel(client, cfg.idLogChannelId);
     if (!cfg.idLogChannelId) {
@@ -74,23 +60,47 @@ module.exports = {
     } else if (!idChannel || !idChannel.isTextBased?.()) {
       channelNote = '\n⚠️ The configured ID channel is unavailable.';
     } else {
-      const lines = linked.map(([id, m]) => {
-        const bm = m.bmPlayerId ? ` · BM \`${m.bmPlayerId}\`` : '';
-        const name = m.ingameName ? ` (${m.ingameName})` : '';
-        return `• <@${id}>${name} — \`${m.steamId}\`${bm}`;
-      });
-      const chunks = lines.length ? chunkLines(lines) : ['*No members have linked a SteamID yet.*'];
-      for (let i = 0; i < chunks.length; i++) {
-        const title = chunks.length > 1 ? `🆔 Linked SteamIDs (${i + 1}/${chunks.length})` : '🆔 Linked SteamIDs';
-        await idChannel.send({ embeds: [embeds.info(title, chunks[i])] }).catch(() => {});
+      // Scan recent history so we never duplicate someone already posted
+      // (covers cards posted before the idPosted flag existed).
+      const postedIds = new Set();
+      const postedSteam = new Set();
+      try {
+        const history = await idChannel.messages.fetch({ limit: 100 });
+        for (const msg of history.values()) {
+          if (msg.author.id !== client.user.id) continue;
+          let text = msg.content || '';
+          for (const e of msg.embeds) text += `\n${e.title || ''}\n${e.description || ''}`;
+          for (const mm of text.matchAll(/<@!?(\d+)>/g)) postedIds.add(mm[1]);
+          for (const mm of text.matchAll(/\b(7656\d{13})\b/g)) postedSteam.add(mm[1]);
+        }
+      } catch { /* ignore history fetch failures */ }
+
+      for (const [id, m] of linked) {
+        const already = m.idPosted || postedIds.has(id) || postedSteam.has(m.steamId);
+        if (already) {
+          if (!m.idPosted) m.idPosted = true; // backfill the flag
+          skipped += 1;
+          continue;
+        }
+        const gm = guild.members.cache.get(id);
+        const user = gm?.user || { id, displayAvatarURL: () => null };
+        const result = {
+          steamid: m.steamId,
+          bmPlayerId: m.bmPlayerId || null,
+          ingameName: m.ingameName || null,
+          rustHours: m.steamRustHours ?? null,
+          status: m.bmPlayerId ? 'linked' : 'steam_only',
+        };
+        await clan.logIdLink(client, user, result); // posts the card + sets idPosted
+        synced += 1;
       }
-      synced = linked.length;
+      db.write('members', members); // persist backfilled idPosted flags
     }
 
     // ── Summary ────────────────────────────────────────────────────────
     let desc =
       `🔒 Marked **${marked}** member(s) without a linked ID as Unverified.\n` +
-      `🆔 Posted **${synced}** linked SteamID(s) to ${idChannel ? `<#${cfg.idLogChannelId}>` : 'the ID channel'}.`;
+      `🆔 Posted **${synced}** new ID card(s)${skipped ? ` (${skipped} already in the channel)` : ''} to ${idChannel ? `<#${cfg.idLogChannelId}>` : 'the ID channel'}.`;
     if (!cfg.unverifiedRoleId) {
       desc += '\n\n⚠️ No Unverified role configured — set one with `/automation unverified-role` to enable marking.';
     }

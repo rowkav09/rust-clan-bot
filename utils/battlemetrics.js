@@ -152,8 +152,11 @@ async function findPlayerByName(name) {
  * Match a SteamID64 to a BattleMetrics player ID via the match endpoint.
  * Returns the player id string, or null if no match / not permitted.
  */
+let warnedMatchAuth = false;
 async function matchSteamId(steamid64) {
   if (!steamid64) return null;
+  // The match endpoint requires an API token; skip the call entirely without one.
+  if (!process.env.BATTLEMETRICS_API_TOKEN) return null;
   try {
     const res = await axios.post(
       `${BASE}/players/match`,
@@ -164,7 +167,15 @@ async function matchSteamId(steamid64) {
     const pid = entry?.relationships?.player?.data?.id;
     return pid || null;
   } catch (err) {
-    console.error('[battlemetrics] steam match error:', err.message);
+    const status = err.response?.status;
+    if (status === 401 || status === 403) {
+      if (!warnedMatchAuth) {
+        console.warn(`[battlemetrics] SteamID match denied (${status}) — your BATTLEMETRICS_API_TOKEN is missing or lacks access. Falling back to name search.`);
+        warnedMatchAuth = true;
+      }
+    } else {
+      console.error('[battlemetrics] steam match error:', err.message);
+    }
     return null;
   }
 }

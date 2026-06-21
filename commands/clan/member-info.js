@@ -58,6 +58,15 @@ module.exports = {
         { name: 'Wipe Hours', value: time.formatHours(rec.currentWipeHours || 0), inline: true },
         { name: 'Total Hours', value: time.formatHours(rec.totalHours || 0), inline: true },
         { name: 'Rust Hours (Steam)', value: rec.steamRustHours != null ? `${rec.steamRustHours}h` : '*not linked*', inline: true },
+        {
+          name: 'Tracking',
+          value: rec.bmPlayerId
+            ? `✅ BM \`${rec.bmPlayerId}\``
+            : rec.steamId
+              ? '⏳ linked, not matched — set in-game name (`/setingamename`) or BM id (`/setbattlemetrics`)'
+              : '❌ no ID linked',
+          inline: true,
+        },
         { name: 'Raids (wipe/total)', value: `${rec.wipeRaids || 0} / ${rec.totalRaids || 0}`, inline: true },
         { name: 'Tasks Done', value: `${rec.tasksCompleted || 0}`, inline: true },
         { name: 'Open Tasks', value: `${openTasks}`, inline: true },
