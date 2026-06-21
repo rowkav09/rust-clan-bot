@@ -12,6 +12,7 @@ const CATEGORIES = {
       ['/setbattlemetrics <player>', 'Link your BattleMetrics profile for auto-tracking.'],
       ['/setingamename <name>', 'Set your displayed in-game name.'],
       ['/online', 'See which clan members are in-game now.'],
+      ['/popgraph [hours]', 'Server population over time.'],
       ['/stats [member]', 'View play-time & activity stats.'],
     ],
   },
@@ -51,6 +52,7 @@ const CATEGORIES = {
       ['/clearwarning <id>', 'Clear a warning (Leader).'],
       ['/activity', 'List inactive members (Officer+).'],
       ['/member-info <member>', 'Full member profile (Officer+).'],
+      ['/dashboard', 'Clan health overview (Officer+).'],
     ],
   },
   intel: {
@@ -59,6 +61,7 @@ const CATEGORIES = {
       ['/note-add ...', 'Add an intel note (Officer+).'],
       ['/note-list [type]', 'Browse intel notes (Member+).'],
       ['/note-delete <id>', 'Delete a note (Officer+).'],
+      ['/enemy add|list|remove', 'Track rivals + online alerts.'],
     ],
   },
   polls: {

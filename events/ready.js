@@ -13,6 +13,9 @@ const popAlert = require('../jobs/popAlert');
 const preWipeReminder = require('../jobs/preWipeReminder');
 const raidReminder = require('../jobs/raidReminder');
 const autoTasks = require('../jobs/autoTasks');
+const popTracker = require('../jobs/popTracker');
+const leaderboardUpdater = require('../jobs/leaderboardUpdater');
+const enemyAlert = require('../jobs/enemyAlert');
 
 module.exports = {
   name: Events.ClientReady,
@@ -47,6 +50,9 @@ module.exports = {
       preWipeReminder,
       raidReminder,
       autoTasks,
+      popTracker,
+      leaderboardUpdater,
+      enemyAlert,
     ];
     for (const job of jobs) {
       try {

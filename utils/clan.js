@@ -27,6 +27,9 @@ function defaultMember(user) {
     promoted: false, // has been auto-promoted Recruit -> Member
     steamId: null, // linked SteamID64
     steamRustHours: null, // verified Rust hours from Steam
+    vcHours: 0, // total voice-channel hours (active, non-AFK)
+    vcCurrentWipe: 0, // voice hours this wipe
+    vcJoinedAt: null, // timestamp of current counting voice session
   };
 }
 
@@ -88,6 +91,52 @@ function syncAllTime(userId, record) {
   db.write('leaderboard', lb);
 }
 
+/**
+ * Add a role to a member with precise diagnostics.
+ * @returns {Promise<{ok:boolean, reason:string}>}
+ *   reason ∈ ok | no_role | no_permission | hierarchy | not_in_guild | error
+ */
+async function assignRole(guild, userId, roleId) {
+  const { PermissionFlagsBits } = require('discord.js');
+  try {
+    const role = guild.roles.cache.get(roleId) || (await guild.roles.fetch(roleId).catch(() => null));
+    if (!role) return { ok: false, reason: 'no_role' };
+
+    const me = await guild.members.fetchMe();
+    if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
+      return { ok: false, reason: 'no_permission' };
+    }
+    if (role.position >= me.roles.highest.position) {
+      return { ok: false, reason: 'hierarchy' };
+    }
+
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member) return { ok: false, reason: 'not_in_guild' };
+
+    await member.roles.add(role);
+    return { ok: true, reason: 'ok' };
+  } catch (err) {
+    console.error('[clan] assignRole error:', err.message);
+    return { ok: false, reason: 'error' };
+  }
+}
+
+/** Human-readable explanation for an assignRole failure reason. */
+function roleErrorText(reason, roleId) {
+  switch (reason) {
+    case 'no_role':
+      return `The configured role (\`${roleId}\`) no longer exists. Re-run \`/setup\`.`;
+    case 'no_permission':
+      return 'I’m missing the **Manage Roles** permission. Grant it in Server Settings → Roles.';
+    case 'hierarchy':
+      return 'My role is **below** that role. Drag my bot role **above** it in Server Settings → Roles.';
+    case 'not_in_guild':
+      return 'That member isn’t in the server anymore.';
+    default:
+      return 'An unknown error occurred while assigning the role.';
+  }
+}
+
 /** Resolve a configured channel and fetch it (returns null on failure). */
 async function fetchChannel(client, channelId) {
   if (!channelId) return null;
@@ -119,6 +168,8 @@ module.exports = {
   wipeScore,
   allTimeScore,
   syncAllTime,
+  assignRole,
+  roleErrorText,
   fetchChannel,
   log,
 };

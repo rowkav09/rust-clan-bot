@@ -28,7 +28,9 @@ async function tick(client) {
   if (Date.now() - lastAlert < cfg.popAlert.cooldownMin * 60000) return;
   lastAlert = Date.now();
 
-  const channel = await clan.fetchChannel(client, cfg.popAlertChannelId);
+  // Prefer the dedicated pop channel so live status, graph, and pings stay together.
+  const target = cfg.popChannelId || cfg.popAlertChannelId;
+  const channel = await clan.fetchChannel(client, target);
   if (!channel || !channel.isTextBased?.()) return;
 
   const reason = queued

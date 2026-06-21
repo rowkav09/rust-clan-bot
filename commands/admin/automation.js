@@ -9,10 +9,15 @@ const FEATURES = [
   ['autoWipeReset', 'Auto wipe reset'],
   ['autoCheckInOut', 'Auto check-in/out + in-game role'],
   ['autoPromote', 'Auto promotion (Recruit→Member)'],
+  ['autoRecruitRole', 'Auto-give Recruit role on accept'],
   ['popAlerts', 'Population alerts'],
   ['preWipeReminders', 'Pre-wipe reminders'],
   ['raidReminders', 'Raid attendee reminders'],
   ['autoTasks', 'Daily auto tasks'],
+  ['livePop', 'Live population channel'],
+  ['autoLeaderboard', 'Auto-updating leaderboard'],
+  ['enemyAlerts', 'Rival online alerts'],
+  ['vcTracking', 'Voice-channel time tracking'],
 ];
 
 module.exports = {
@@ -68,6 +73,30 @@ module.exports = {
     )
     .addSubcommand((s) =>
       s
+        .setName('pop-channel')
+        .setDescription('Set the text channel for the live population embed (pop + graph + alerts).')
+        .addChannelOption((o) =>
+          o.setName('channel').setDescription('Population channel.').addChannelTypes(ChannelType.GuildText).setRequired(true),
+        ),
+    )
+    .addSubcommand((s) =>
+      s
+        .setName('leaderboard-channel')
+        .setDescription('Set the channel for the auto-updating leaderboard.')
+        .addChannelOption((o) =>
+          o.setName('channel').setDescription('Leaderboard channel.').addChannelTypes(ChannelType.GuildText).setRequired(true),
+        ),
+    )
+    .addSubcommand((s) =>
+      s
+        .setName('enemy-channel')
+        .setDescription('Set the channel for rival-online alerts.')
+        .addChannelOption((o) =>
+          o.setName('channel').setDescription('Rival alert channel.').addChannelTypes(ChannelType.GuildText).setRequired(true),
+        ),
+    )
+    .addSubcommand((s) =>
+      s
         .setName('promotion')
         .setDescription('Set Recruit→Member promotion thresholds.')
         .addNumberOption((o) => o.setName('hours').setDescription('Total hours required.').setMinValue(0))
@@ -105,6 +134,9 @@ module.exports = {
           { name: 'Features', value: featureLines },
           { name: 'In-game role', value: role(merged.inGameRoleId), inline: true },
           { name: 'Steam-link channel', value: merged.linkChannelId ? `<#${merged.linkChannelId}>` : '*unset*', inline: true },
+          { name: 'Live pop channel', value: merged.popChannelId ? `<#${merged.popChannelId}>` : '*unset*', inline: true },
+          { name: 'Leaderboard channel', value: merged.leaderboardChannelId ? `<#${merged.leaderboardChannelId}>` : '*unset*', inline: true },
+          { name: 'Rival alert channel', value: merged.enemyAlertChannelId ? `<#${merged.enemyAlertChannelId}>` : '*unset*', inline: true },
           { name: 'Pop alert channel', value: merged.popAlertChannelId ? `<#${merged.popAlertChannelId}>` : '*unset*', inline: true },
           {
             name: 'Pop alert',
@@ -167,6 +199,44 @@ module.exports = {
               'their BattleMetrics tracking.',
           ),
         ],
+        ephemeral: true,
+      });
+    }
+
+    if (sub === 'pop-channel') {
+      const channel = interaction.options.getChannel('channel', true);
+      cfg.popChannelId = channel.id;
+      cfg.popMessageId = null; // force a fresh live message
+      db.write('config', cfg);
+      return interaction.reply({
+        embeds: [
+          embeds.success(
+            'Updated',
+            `${channel} will now host the live population embed (current pop + 24h graph) ` +
+              'and population alerts, all in one place.',
+          ),
+        ],
+        ephemeral: true,
+      });
+    }
+
+    if (sub === 'leaderboard-channel') {
+      const channel = interaction.options.getChannel('channel', true);
+      cfg.leaderboardChannelId = channel.id;
+      cfg.leaderboardMessageId = null; // force a fresh message
+      db.write('config', cfg);
+      return interaction.reply({
+        embeds: [embeds.success('Updated', `The auto-updating leaderboard will post in ${channel} within ~30 min.`)],
+        ephemeral: true,
+      });
+    }
+
+    if (sub === 'enemy-channel') {
+      const channel = interaction.options.getChannel('channel', true);
+      cfg.enemyAlertChannelId = channel.id;
+      db.write('config', cfg);
+      return interaction.reply({
+        embeds: [embeds.success('Updated', `Rival-online alerts will post in ${channel}.`)],
         ephemeral: true,
       });
     }

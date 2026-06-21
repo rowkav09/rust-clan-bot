@@ -60,6 +60,7 @@ module.exports = {
         { name: 'Raids (total)', value: `${rec.totalRaids || 0}`, inline: true },
         { name: 'Tasks Done', value: `${rec.tasksCompleted || 0}`, inline: true },
         { name: 'Warnings', value: `${rec.warnings || 0}`, inline: true },
+        { name: 'Voice (wipe)', value: time.formatHours(rec.vcCurrentWipe || 0), inline: true },
         { name: 'In-game Name', value: rec.ingameName || '*not set*', inline: true },
         { name: 'Last Seen', value: time.relative(rec.lastSeen || rec.joinedAt), inline: true },
       )

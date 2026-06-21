@@ -39,6 +39,15 @@ function getConfig() {
     inGameRoleId: cfg.inGameRoleId || process.env.INGAME_ROLE_ID || null,
     // Channel where members paste their Steam profile to auto-link.
     linkChannelId: cfg.linkChannelId || process.env.LINK_CHANNEL_ID || null,
+    // Text channel hosting the live population embed (current pop + graph + alerts).
+    popChannelId: cfg.popChannelId || process.env.POP_CHANNEL_ID || null,
+    popMessageId: cfg.popMessageId || null,
+    // Channel + message holding the auto-updating leaderboard.
+    leaderboardChannelId: cfg.leaderboardChannelId || null,
+    leaderboardMessageId: cfg.leaderboardMessageId || null,
+    // Where rival-online alerts post (defaults to the log channel).
+    enemyAlertChannelId:
+      cfg.enemyAlertChannelId || cfg.logChannelId || process.env.LOG_CHANNEL_ID || null,
     popAlertChannelId:
       cfg.popAlertChannelId || cfg.logChannelId || process.env.LOG_CHANNEL_ID || null,
 
@@ -73,10 +82,15 @@ function getConfig() {
       autoWipeReset: cfg.automation?.autoWipeReset ?? false,
       autoCheckInOut: cfg.automation?.autoCheckInOut ?? true,
       autoPromote: cfg.automation?.autoPromote ?? true,
+      autoRecruitRole: cfg.automation?.autoRecruitRole ?? true,
       popAlerts: cfg.automation?.popAlerts ?? true,
       preWipeReminders: cfg.automation?.preWipeReminders ?? true,
       raidReminders: cfg.automation?.raidReminders ?? true,
       autoTasks: cfg.automation?.autoTasks ?? true,
+      livePop: cfg.automation?.livePop ?? true,
+      autoLeaderboard: cfg.automation?.autoLeaderboard ?? true,
+      enemyAlerts: cfg.automation?.enemyAlerts ?? true,
+      vcTracking: cfg.automation?.vcTracking ?? true,
     },
   };
 }

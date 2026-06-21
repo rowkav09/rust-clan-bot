@@ -4,6 +4,7 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const db = require('../../utils/db');
 const embeds = require('../../utils/embeds');
 const time = require('../../utils/time');
+const clan = require('../../utils/clan');
 const { requireTier, TIER, getConfig } = require('../../utils/permissions');
 
 async function finalizeApplication(interaction, decision, client) {
@@ -49,14 +50,10 @@ async function finalizeApplication(interaction, decision, client) {
   let roleNote = '';
   if (decision === 'accept') {
     const cfg = getConfig();
-    if (cfg.recruitRoleId) {
-      try {
-        const guild = interaction.guild;
-        const member = await guild.members.fetch(app.userId);
-        await member.roles.add(cfg.recruitRoleId);
-      } catch (err) {
-        roleNote = '\n⚠️ Could not assign the recruit role (check role hierarchy / permissions).';
-        console.error('[application-review] Role assign failed:', err.message);
+    if (cfg.recruitRoleId && cfg.automation.autoRecruitRole) {
+      const res = await clan.assignRole(interaction.guild, app.userId, cfg.recruitRoleId);
+      if (!res.ok) {
+        roleNote = `\n⚠️ Could not assign the recruit role: ${clan.roleErrorText(res.reason, cfg.recruitRoleId)}`;
       }
     }
   }
@@ -64,11 +61,12 @@ async function finalizeApplication(interaction, decision, client) {
   // DM the applicant.
   try {
     const user = await client.users.fetch(app.userId);
+    const gaveRole = decision === 'accept' && getConfig().recruitRoleId && getConfig().automation.autoRecruitRole;
     const dm =
       decision === 'accept'
         ? embeds.success(
             'Application Approved! 🎉',
-            'Welcome to the clan! You’ve been given the **Recruit** role. ' +
+            `Welcome to the clan!${gaveRole ? ' You’ve been given the **Recruit** role.' : ''} ` +
               'Use `/checkin` when you go in-game and `/help` to see what you can do.',
           )
         : embeds.error(

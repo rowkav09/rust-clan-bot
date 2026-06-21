@@ -94,6 +94,8 @@ async function performWipeReset(client) {
     m.currentWipeHours = 0;
     m.wipeRaids = 0;
     m.currentWipeTasks = 0;
+    m.vcCurrentWipe = 0;
+    m.vcJoinedAt = null;
     m.checkInTime = null;
     m.autoTracked = false;
   }

@@ -36,13 +36,12 @@ async function tick(client) {
     if (!gm.roles.cache.has(cfg.recruitRoleId)) continue; // only promote current recruits
     if (gm.roles.cache.has(cfg.memberRoleId)) continue;
 
-    try {
-      await gm.roles.add(cfg.memberRoleId);
-      await gm.roles.remove(cfg.recruitRoleId);
-    } catch (e) {
-      console.error('[autoPromote] role change failed:', e.message);
+    const res = await clan.assignRole(guild, id, cfg.memberRoleId);
+    if (!res.ok) {
+      console.error(`[autoPromote] cannot promote ${id}: ${res.reason}`);
       continue;
     }
+    await gm.roles.remove(cfg.recruitRoleId).catch(() => {});
 
     m.promoted = true;
     m.tier = permissions.TIER.MEMBER;
