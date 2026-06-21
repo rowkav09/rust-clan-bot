@@ -23,6 +23,7 @@ function defaultMember(user) {
     ingameName: null,
     bmPlayerId: null, // BattleMetrics player ID for auto time-tracking
     bmLast: null, // last observed timePlayed (seconds) on the clan server
+    seeded: false, // whether historical hours have been seeded from BattleMetrics
     online: false, // live in-game status (from BattleMetrics sync)
     promoted: false, // has been auto-promoted Recruit -> Member
     steamId: null, // linked SteamID64

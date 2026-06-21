@@ -51,11 +51,25 @@ async function tick(client) {
 
     const tp = info.timePlayed; // seconds, lifetime on this server
 
-    // ── Hours via delta ────────────────────────────────────────────
-    if (m.bmLast == null) {
+    // ── One-time seed of real hours from BattleMetrics ─────────────
+    // Total = lifetime on the server; current wipe = sessions since the wipe.
+    if (!m.seeded) {
+      m.totalHours = Number(Math.max(m.totalHours || 0, tp / 3600).toFixed(3));
+      const wipe = db.read('wipe');
+      const since = wipe.lastWipe || wipe.wipeStart || null;
+      const wipeHrs = await bm.getServerSessionHours(m.bmPlayerId, srvId, since);
+      if (wipeHrs != null) {
+        m.currentWipeHours = Number(Math.max(m.currentWipeHours || 0, wipeHrs).toFixed(3));
+      }
+      m.bmLast = tp;
+      m.seeded = true;
+      clan.syncAllTime(m.discordId, m);
+      changed = true;
+    } else if (m.bmLast == null) {
       m.bmLast = tp;
       changed = true;
     } else {
+      // ── Ongoing hours via delta ──────────────────────────────────
       const deltaSec = Math.max(0, tp - m.bmLast);
       if (deltaSec > 0) {
         const hours = deltaSec / 3600;

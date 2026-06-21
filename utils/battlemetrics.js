@@ -137,6 +137,39 @@ async function findPlayerByName(name) {
   return list[0] || null;
 }
 
+/**
+ * Sum a player's play time (hours) on a server since `sinceIso`, from their
+ * session history. Lets us seed real this-wipe hours instead of starting at 0.
+ * Returns hours (number) or null on failure.
+ */
+async function getServerSessionHours(playerId, srvId, sinceIso) {
+  if (!playerId || !srvId) return null;
+  const since = sinceIso ? new Date(sinceIso).getTime() : 0;
+  try {
+    const res = await axios.get(`${BASE}/players/${playerId}/relationships/sessions`, {
+      params: { 'page[size]': 100 },
+      headers: authHeaders(),
+      timeout: 10000,
+    });
+    const sessions = res.data?.data || [];
+    const now = Date.now();
+    let sec = 0;
+    for (const s of sessions) {
+      const sid = s.relationships?.server?.data?.id;
+      if (String(sid) !== String(srvId)) continue;
+      const start = new Date(s.attributes?.start).getTime();
+      if (Number.isNaN(start)) continue;
+      const stop = s.attributes?.stop ? new Date(s.attributes.stop).getTime() : now;
+      const effStart = Math.max(start, since);
+      if (stop > effStart) sec += (stop - effStart) / 1000;
+    }
+    return sec / 3600;
+  } catch (err) {
+    console.error('[battlemetrics] sessions error:', err.message);
+    return null;
+  }
+}
+
 /** Fetch a BattleMetrics player's display name by ID (null on failure). */
 async function getPlayerName(playerId) {
   if (!playerId) return null;
@@ -225,6 +258,7 @@ module.exports = {
   getServer,
   serverId,
   getPlayerServerTime,
+  getServerSessionHours,
   getPlayerName,
   findPlayerByName,
   searchPlayers,
