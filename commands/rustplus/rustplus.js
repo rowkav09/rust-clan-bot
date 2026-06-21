@@ -43,6 +43,24 @@ module.exports = {
         .addChannelOption((o) =>
           o.setName('channel').setDescription('Target text channel.').addChannelTypes(ChannelType.GuildText).setRequired(true),
         ),
+    )
+    .addSubcommand((s) =>
+      s
+        .setName('invite')
+        .setDescription('Invite a player to the in-game clan/team — modded servers only (Officer+).')
+        .addUserOption((o) => o.setName('member').setDescription('A linked clan member to invite.'))
+        .addStringOption((o) => o.setName('steamid').setDescription('Or a raw SteamID64.')),
+    )
+    .addSubcommand((s) =>
+      s
+        .setName('invite-command')
+        .setDescription('Set the in-game invite command template (Leader).')
+        .addStringOption((o) =>
+          o
+            .setName('template')
+            .setDescription('Use {steamid} as the placeholder, e.g. /clan invite {steamid}')
+            .setRequired(true),
+        ),
     ),
 
   async execute(interaction) {
@@ -55,13 +73,18 @@ module.exports = {
           embeds.info(
             '🔗 Pairing Rust+',
             'Rust+ lets the bot read team chat, smart alarms, map events and more.\n\n' +
-              '**One-time setup (on the bot host):**\n' +
+              '**One-time setup:**\n' +
               '1. Run `npm run rustplus:register` — a browser opens to log in with Steam.\n' +
               '2. This saves `rustplus.config.json` and starts listening for pairings.\n' +
               '3. In-game, open the **Rust+** menu and tap **Pair** on the server.\n' +
               '4. The bot auto-saves the server and connects — you’ll see a ✅ here.\n\n' +
-              '**Smart alarms:** pair any Smart Alarm in-game and its triggers will be ' +
-              'forwarded to your alarms channel.\n\n' +
+              '**Headless / no browser on the host?** Run step 1 on your own PC, then copy ' +
+              'the generated `rustplus.config.json` into the bot’s folder and restart. When ' +
+              'you tap **Pair** in-game, the bot picks it up automatically.\n\n' +
+              '**Smart alarms:** pair any Smart Alarm in-game and its triggers are forwarded ' +
+              'to your alarms channel.\n\n' +
+              '**Clan invites (modded):** `/rustplus invite` sends your server’s invite ' +
+              'command in team chat. Set the template with `/rustplus invite-command`.\n\n' +
               'Set channels with `/rustplus channel`. Toggle features with `/automation toggle`.',
           ),
         ],
@@ -156,6 +179,77 @@ module.exports = {
       db.write('config', cfg);
       return interaction.reply({
         embeds: [embeds.success('Updated', `**${meta[1]}** channel set to ${channel}.`)],
+        ephemeral: true,
+      });
+    }
+
+    // ── /rustplus invite ───────────────────────────────────────────────
+    if (sub === 'invite') {
+      if (!(await requireTier(interaction, TIER.OFFICER))) return;
+      const member = interaction.options.getUser('member');
+      let steamid = interaction.options.getString('steamid')?.trim() || null;
+
+      if (member && !steamid) {
+        const rec = db.read('members')[member.id];
+        steamid = rec?.steamId || null;
+        if (!steamid) {
+          return interaction.reply({
+            embeds: [embeds.error('No linked SteamID', `${member} hasn’t linked a Steam ID yet (🆔 Link ID or \`/setsteam\`).`)],
+            ephemeral: true,
+          });
+        }
+      }
+      if (!steamid) {
+        return interaction.reply({
+          embeds: [embeds.error('Nothing to invite', 'Provide a member (with a linked ID) or a raw SteamID64.')],
+          ephemeral: true,
+        });
+      }
+      if (!/^\d{17}$/.test(steamid)) {
+        return interaction.reply({
+          embeds: [embeds.error('Bad SteamID', 'That doesn’t look like a SteamID64 (17 digits).')],
+          ephemeral: true,
+        });
+      }
+
+      await interaction.deferReply({ ephemeral: true });
+      if (!rustplus.isReady()) {
+        return interaction.editReply({
+          embeds: [embeds.error('Not connected', 'Rust+ isn’t connected. See `/rustplus status`.')],
+        });
+      }
+      const cfg = getConfig();
+      const command = (cfg.rustplusInviteCommand || '/clan invite {steamid}').replace('{steamid}', steamid);
+      const ok = await rustplus.say(command);
+      return interaction.editReply({
+        embeds: ok
+          ? [
+              embeds.success(
+                'Invite sent',
+                `Sent in team chat: \`${command}\`\n\n` +
+                  '*Only works on modded servers that read team-chat commands, and the paired ' +
+                  'account needs permission to invite. Tweak the command with `/rustplus invite-command`.*',
+              ),
+            ]
+          : [embeds.error('Failed', 'Could not send the command in-game.')],
+      });
+    }
+
+    // ── /rustplus invite-command ───────────────────────────────────────
+    if (sub === 'invite-command') {
+      if (!(await requireTier(interaction, TIER.LEADER))) return;
+      const template = interaction.options.getString('template', true).trim();
+      if (!template.includes('{steamid}')) {
+        return interaction.reply({
+          embeds: [embeds.warning('Missing placeholder', 'Include `{steamid}` so I know where to insert the ID, e.g. `/clan invite {steamid}`.')],
+          ephemeral: true,
+        });
+      }
+      const cfg = db.read('config');
+      cfg.rustplusInviteCommand = template;
+      db.write('config', cfg);
+      return interaction.reply({
+        embeds: [embeds.success('Updated', `In-game invite command set to:\n\`${template}\``)],
         ephemeral: true,
       });
     }

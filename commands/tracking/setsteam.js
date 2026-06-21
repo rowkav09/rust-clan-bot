@@ -3,6 +3,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const embeds = require('../../utils/embeds');
 const steam = require('../../utils/steam');
+const clan = require('../../utils/clan');
 const { linkMemberBySteam } = require('../../utils/linkplayer');
 const { requireTier, TIER } = require('../../utils/permissions');
 
@@ -51,6 +52,10 @@ module.exports = {
       return interaction.editReply({
         embeds: [embeds.error('Link failed', 'Something went wrong reaching Steam/BattleMetrics. Try again shortly.')],
       });
+    }
+
+    if (result.status !== 'no_steam') {
+      clan.logIdLink(interaction.client, user, result).catch(() => {});
     }
 
     if (result.status === 'no_steam') {

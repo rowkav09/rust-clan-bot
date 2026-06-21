@@ -27,6 +27,16 @@ async function tick(client) {
   }
 
   for (const [, m] of Object.entries(members)) {
+    // Self-heal: members who only linked Steam get their BattleMetrics player
+    // resolved here once BM has seen them on the server.
+    if (!m.bmPlayerId && m.steamId) {
+      const resolved = await bm.resolveClanPlayer({ steamid: m.steamId, personaName: m.ingameName });
+      if (resolved) {
+        m.bmPlayerId = String(resolved.id);
+        if (resolved.name && !m.ingameName) m.ingameName = resolved.name;
+        changed = true;
+      }
+    }
     if (!m.bmPlayerId) continue;
 
     const info = await bm.getPlayerServerTime(m.bmPlayerId, srvId);

@@ -29,6 +29,8 @@ function getConfig() {
     officerRoleId: cfg.officerRoleId || process.env.OFFICER_ROLE_ID || null,
     memberRoleId: cfg.memberRoleId || process.env.MEMBER_ROLE_ID || null,
     recruitRoleId: cfg.recruitRoleId || process.env.RECRUIT_ROLE_ID || null,
+    // Role auto-assigned on join; removed once a member is verified/approved.
+    unverifiedRoleId: cfg.unverifiedRoleId || process.env.UNVERIFIED_ROLE_ID || null,
     logChannelId: cfg.logChannelId || process.env.LOG_CHANNEL_ID || null,
     applicationChannelId:
       cfg.applicationChannelId || process.env.APPLICATION_CHANNEL_ID || null,
@@ -39,6 +41,8 @@ function getConfig() {
     inGameRoleId: cfg.inGameRoleId || process.env.INGAME_ROLE_ID || null,
     // Channel where members paste their Steam profile to auto-link.
     linkChannelId: cfg.linkChannelId || process.env.LINK_CHANNEL_ID || null,
+    // Channel where successful ID links are logged (mentions the member).
+    idLogChannelId: cfg.idLogChannelId || null,
     // Text channel hosting the live population embed (current pop + graph + alerts).
     popChannelId: cfg.popChannelId || process.env.POP_CHANNEL_ID || null,
     popMessageId: cfg.popMessageId || null,
@@ -53,6 +57,9 @@ function getConfig() {
     rustplusChatChannelId: cfg.rustplusChatChannelId || null,
     rustplusEventChannelId: cfg.rustplusEventChannelId || null,
     rustplusAlarmChannelId: cfg.rustplusAlarmChannelId || cfg.logChannelId || null,
+    // Chat command template for inviting players to the in-game clan/team on
+    // modded servers. {steamid} is substituted with the member's SteamID64.
+    rustplusInviteCommand: cfg.rustplusInviteCommand || '/clan invite {steamid}',
     popAlertChannelId:
       cfg.popAlertChannelId || cfg.logChannelId || process.env.LOG_CHANNEL_ID || null,
 
@@ -87,7 +94,10 @@ function getConfig() {
       autoWipeReset: cfg.automation?.autoWipeReset ?? false,
       autoCheckInOut: cfg.automation?.autoCheckInOut ?? true,
       autoPromote: cfg.automation?.autoPromote ?? true,
-      autoRecruitRole: cfg.automation?.autoRecruitRole ?? true,
+      // Assign the Unverified role automatically when someone joins.
+      autoUnverifiedRole: cfg.automation?.autoUnverifiedRole ?? true,
+      // Approve applications instantly on submit (skip officer review).
+      autoApproveApplications: cfg.automation?.autoApproveApplications ?? false,
       popAlerts: cfg.automation?.popAlerts ?? true,
       preWipeReminders: cfg.automation?.preWipeReminders ?? true,
       raidReminders: cfg.automation?.raidReminders ?? true,
@@ -100,6 +110,8 @@ function getConfig() {
       rustplusEvents: cfg.automation?.rustplusEvents ?? true,
       rustplusDownedAlerts: cfg.automation?.rustplusDownedAlerts ?? true,
       rustplusAlarms: cfg.automation?.rustplusAlarms ?? true,
+      // Auto-send the in-game clan invite when a member is verified (modded servers).
+      autoClanInvite: cfg.automation?.autoClanInvite ?? false,
     },
   };
 }

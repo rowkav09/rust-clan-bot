@@ -46,23 +46,22 @@ async function finalizeApplication(interaction, decision, client) {
     console.error('[application-review] Could not edit message:', err.message);
   }
 
-  // Assign the recruit role on acceptance.
+  // Verify the member on acceptance: grant the verified role + drop Unverified.
   let roleNote = '';
+  let gaveRole = false;
   if (decision === 'accept') {
     const cfg = getConfig();
-    if (!cfg.automation.autoRecruitRole) {
+    if (!cfg.recruitRoleId) {
       roleNote =
-        '\nℹ️ No role was assigned because **Auto-give Recruit role** is turned off. ' +
-        'Enable it with `/automation toggle feature:autoRecruitRole enabled:true`, ' +
-        'or assign the role manually.';
-    } else if (!cfg.recruitRoleId) {
-      roleNote =
-        '\n⚠️ No recruit role is configured, so none was assigned. ' +
-        'Set one with `/setup` (or `/automation`).';
+        '\n⚠️ No verified/recruit role is configured, so none was assigned. ' +
+        'Set one with `/setup`.';
     } else {
-      const res = await clan.assignRole(interaction.guild, app.userId, cfg.recruitRoleId);
-      if (!res.ok) {
-        roleNote = `\n⚠️ Could not assign the recruit role: ${clan.roleErrorText(res.reason, cfg.recruitRoleId)}`;
+      const v = await clan.verifyMember(interaction.guild, app.userId);
+      gaveRole = v.roleOk;
+      if (!v.roleOk) {
+        roleNote = `\n⚠️ Could not assign the verified role: ${clan.roleErrorText(v.reason, cfg.recruitRoleId)}`;
+      } else if (cfg.unverifiedRoleId && !v.removedUnverified) {
+        roleNote = '\nℹ️ Granted the verified role, but couldn’t remove the Unverified role (check my role position).';
       }
     }
   }
@@ -70,7 +69,6 @@ async function finalizeApplication(interaction, decision, client) {
   // DM the applicant.
   try {
     const user = await client.users.fetch(app.userId);
-    const gaveRole = decision === 'accept' && getConfig().recruitRoleId && getConfig().automation.autoRecruitRole;
     const dm =
       decision === 'accept'
         ? embeds.success(

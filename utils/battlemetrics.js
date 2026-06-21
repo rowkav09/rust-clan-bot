@@ -104,9 +104,20 @@ async function getPlayerServerTime(playerId, srvId = serverId()) {
       headers: authHeaders(),
       timeout: 10000,
     });
-    const included = res.data?.included || [];
-    const match = included.find((s) => s.type === 'server' && String(s.id) === String(srvId));
+
+    // The per-player play meta (timePlayed/online/lastSeen) lives on the
+    // relationship entries, NOT on the `included` server objects.
+    const rels = res.data?.data?.relationships?.servers?.data || [];
+    let match = rels.find((s) => String(s.id) === String(srvId));
+
+    // Fallback: some responses attach meta to the included objects instead.
+    if (!match || !match.meta) {
+      const included = res.data?.included || [];
+      const inc = included.find((s) => s.type === 'server' && String(s.id) === String(srvId));
+      if (inc && inc.meta) match = inc;
+    }
     if (!match) return null;
+
     const meta = match.meta || {};
     return {
       timePlayed: Number(meta.timePlayed || 0), // seconds

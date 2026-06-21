@@ -9,7 +9,8 @@ const FEATURES = [
   ['autoWipeReset', 'Auto wipe reset'],
   ['autoCheckInOut', 'Auto check-in/out + in-game role'],
   ['autoPromote', 'Auto promotion (Recruit→Member)'],
-  ['autoRecruitRole', 'Auto-give Recruit role on accept'],
+  ['autoUnverifiedRole', 'Auto-give Unverified role on join'],
+  ['autoApproveApplications', 'Auto-approve applications on submit'],
   ['popAlerts', 'Population alerts'],
   ['preWipeReminders', 'Pre-wipe reminders'],
   ['raidReminders', 'Raid attendee reminders'],
@@ -22,6 +23,7 @@ const FEATURES = [
   ['rustplusEvents', 'Rust+ game events (cargo/heli)'],
   ['rustplusDownedAlerts', 'Rust+ teammate-down alerts'],
   ['rustplusAlarms', 'Rust+ smart alarms'],
+  ['autoClanInvite', 'Auto in-game clan invite on verify'],
 ];
 
 module.exports = {
@@ -69,10 +71,24 @@ module.exports = {
     )
     .addSubcommand((s) =>
       s
+        .setName('unverified-role')
+        .setDescription('Set the role auto-assigned on join (removed once verified).')
+        .addRoleOption((o) => o.setName('role').setDescription('Unverified role.').setRequired(true)),
+    )
+    .addSubcommand((s) =>
+      s
         .setName('link-channel')
         .setDescription('Set the channel where members paste their Steam profile to auto-link.')
         .addChannelOption((o) =>
           o.setName('channel').setDescription('Steam-link channel.').addChannelTypes(ChannelType.GuildText).setRequired(true),
+        ),
+    )
+    .addSubcommand((s) =>
+      s
+        .setName('id-channel')
+        .setDescription('Set the channel where linked Steam IDs are logged (mentions the member).')
+        .addChannelOption((o) =>
+          o.setName('channel').setDescription('ID-log channel.').addChannelTypes(ChannelType.GuildText).setRequired(true),
         ),
     )
     .addSubcommand((s) =>
@@ -137,7 +153,9 @@ module.exports = {
         .addFields(
           { name: 'Features', value: featureLines },
           { name: 'In-game role', value: role(merged.inGameRoleId), inline: true },
+          { name: 'Unverified role', value: role(merged.unverifiedRoleId), inline: true },
           { name: 'Steam-link channel', value: merged.linkChannelId ? `<#${merged.linkChannelId}>` : '*unset*', inline: true },
+          { name: 'ID-log channel', value: merged.idLogChannelId ? `<#${merged.idLogChannelId}>` : '*unset*', inline: true },
           { name: 'Live pop channel', value: merged.popChannelId ? `<#${merged.popChannelId}>` : '*unset*', inline: true },
           { name: 'Leaderboard channel', value: merged.leaderboardChannelId ? `<#${merged.leaderboardChannelId}>` : '*unset*', inline: true },
           { name: 'Rival alert channel', value: merged.enemyAlertChannelId ? `<#${merged.enemyAlertChannelId}>` : '*unset*', inline: true },
@@ -191,6 +209,24 @@ module.exports = {
       });
     }
 
+    if (sub === 'unverified-role') {
+      const roleObj = interaction.options.getRole('role', true);
+      cfg.unverifiedRoleId = roleObj.id;
+      db.write('config', cfg);
+      // Warn if the bot can't manage the chosen role.
+      let note = '';
+      try {
+        const me = await interaction.guild.members.fetchMe();
+        if (roleObj.position >= me.roles.highest.position) {
+          note = '\n\n⚠️ My bot role is **below** this one — drag my role above it in Server Settings → Roles, or I can’t assign/remove it.';
+        }
+      } catch { /* ignore */ }
+      return interaction.reply({
+        embeds: [embeds.success('Updated', `New members will be auto-assigned ${roleObj} on join.${note}`)],
+        ephemeral: true,
+      });
+    }
+
     if (sub === 'link-channel') {
       const channel = interaction.options.getChannel('channel', true);
       cfg.linkChannelId = channel.id;
@@ -203,6 +239,16 @@ module.exports = {
               'their BattleMetrics tracking.',
           ),
         ],
+        ephemeral: true,
+      });
+    }
+
+    if (sub === 'id-channel') {
+      const channel = interaction.options.getChannel('channel', true);
+      cfg.idLogChannelId = channel.id;
+      db.write('config', cfg);
+      return interaction.reply({
+        embeds: [embeds.success('Updated', `Linked Steam IDs will now be logged in ${channel}.`)],
         ephemeral: true,
       });
     }

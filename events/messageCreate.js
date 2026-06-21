@@ -5,6 +5,7 @@ const embeds = require('../utils/embeds');
 const time = require('../utils/time');
 const { getConfig } = require('../utils/permissions');
 const { linkMemberBySteam } = require('../utils/linkplayer');
+const clan = require('../utils/clan');
 const steam = require('../utils/steam');
 
 // Only react to an actual Steam profile URL or a 17-digit SteamID64.
@@ -52,6 +53,10 @@ module.exports = {
 
     try {
       const result = await linkMemberBySteam(message.author, steamInput);
+
+      if (result.status !== 'no_steam') {
+        clan.logIdLink(message.client, message.author, result).catch(() => {});
+      }
 
       if (result.status === 'no_steam') {
         await message.react('❌').catch(() => {});

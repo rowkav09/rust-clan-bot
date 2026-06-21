@@ -18,7 +18,7 @@ const ROLE_FIELDS = [
   ['leader', 'leaderRoleId', 'Leader'],
   ['officer', 'officerRoleId', 'Officer'],
   ['member', 'memberRoleId', 'Member'],
-  ['recruit', 'recruitRoleId', 'Recruit'],
+  ['recruit', 'recruitRoleId', 'Recruit (verified)'],
 ];
 
 const CHANNEL_FIELDS = [
@@ -158,6 +158,28 @@ module.exports = {
         }
       }
 
+      // Verify the bot can actually assign the configured roles (its own role
+      // must sit ABOVE them) — the usual reason roles "don't get given".
+      let hierarchyWarning = '';
+      try {
+        const guild = await client.guilds.fetch(interaction.guildId);
+        const me = await guild.members.fetchMe();
+        const myTop = me.roles.highest.position;
+        const tooHigh = [];
+        for (const [, key, label] of ROLE_FIELDS) {
+          if (!cfg[key]) continue;
+          const role = guild.roles.cache.get(cfg[key]) || (await guild.roles.fetch(cfg[key]).catch(() => null));
+          if (role && role.position >= myTop) tooHigh.push(label);
+        }
+        if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
+          hierarchyWarning = '\n\n⚠️ I’m missing the **Manage Roles** permission — I can’t assign any roles until you grant it.';
+        } else if (tooHigh.length) {
+          hierarchyWarning =
+            `\n\n⚠️ My bot role is **below** ${tooHigh.join(', ')}, so I can’t assign ${tooHigh.length > 1 ? 'them' : 'it'}. ` +
+            'Drag my role **above** them in Server Settings → Roles.';
+        }
+      } catch { /* ignore */ }
+
       const missing = [...ROLE_FIELDS, ...CHANNEL_FIELDS].filter(([, key]) => !cfg[key]);
       const embed = (missing.length ? embeds.warning : embeds.success)(
         'Setup complete',
@@ -165,7 +187,8 @@ module.exports = {
           (missing.length
             ? `\n\n⚠️ ${missing.length} value(s) still unset — you can re-run \`/setup\` anytime.`
             : '\n\nAll values configured! 🎉') +
-          wipeWarning,
+          wipeWarning +
+          hierarchyWarning,
       );
       return interaction.update({ embeds: [embed], components: [] });
     },

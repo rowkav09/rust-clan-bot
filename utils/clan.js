@@ -121,6 +121,79 @@ async function assignRole(guild, userId, roleId) {
   }
 }
 
+/**
+ * Remove a role from a member with the same diagnostics as assignRole.
+ * @returns {Promise<{ok:boolean, reason:string}>}
+ */
+async function removeRole(guild, userId, roleId) {
+  const { PermissionFlagsBits } = require('discord.js');
+  try {
+    const role = guild.roles.cache.get(roleId) || (await guild.roles.fetch(roleId).catch(() => null));
+    if (!role) return { ok: false, reason: 'no_role' };
+
+    const me = await guild.members.fetchMe();
+    if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
+      return { ok: false, reason: 'no_permission' };
+    }
+    if (role.position >= me.roles.highest.position) {
+      return { ok: false, reason: 'hierarchy' };
+    }
+
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (!member) return { ok: false, reason: 'not_in_guild' };
+
+    if (member.roles.cache.has(roleId)) await member.roles.remove(role);
+    return { ok: true, reason: 'ok' };
+  } catch (err) {
+    console.error('[clan] removeRole error:', err.message);
+    return { ok: false, reason: 'error' };
+  }
+}
+
+/**
+ * Verify a member: grant the configured verified role (Recruit) and remove the
+ * Unverified role. Used by application approval and auto-approve.
+ * @returns {Promise<{roleOk:boolean, reason:string, removedUnverified:boolean}>}
+ */
+async function verifyMember(guild, userId) {
+  const cfg = permissions.getConfig();
+  const out = { roleOk: false, reason: 'no_recruit', removedUnverified: false, inviteSent: false };
+
+  if (cfg.recruitRoleId) {
+    const res = await assignRole(guild, userId, cfg.recruitRoleId);
+    out.roleOk = res.ok;
+    out.reason = res.reason;
+  }
+  if (cfg.unverifiedRoleId) {
+    const r = await removeRole(guild, userId, cfg.unverifiedRoleId).catch(() => ({ ok: false }));
+    out.removedUnverified = !!r.ok;
+  }
+
+  // Optional: invite the player to the in-game clan/team on modded servers.
+  out.inviteSent = await maybeClanInvite(userId).catch(() => false);
+  return out;
+}
+
+/**
+ * Send the configured in-game clan-invite command via Rust+ team chat, if the
+ * feature is enabled, Rust+ is connected, and the member has a linked SteamID.
+ * @returns {Promise<boolean>} true if a command was sent.
+ */
+async function maybeClanInvite(userId) {
+  const cfg = permissions.getConfig();
+  if (!cfg.automation.autoClanInvite) return false;
+  const rec = db.read('members')[userId];
+  if (!rec || !rec.steamId) return false;
+
+  const rustplus = require('./rustplus');
+  if (!rustplus.isReady()) return false;
+
+  const command = (cfg.rustplusInviteCommand || '/clan invite {steamid}').replace('{steamid}', rec.steamId);
+  const ok = await rustplus.say(command).catch(() => false);
+  if (ok) console.log(`[clan] sent in-game invite for ${userId}: ${command}`);
+  return !!ok;
+}
+
 /** Human-readable explanation for an assignRole failure reason. */
 function roleErrorText(reason, roleId) {
   switch (reason) {
@@ -148,6 +221,30 @@ async function fetchChannel(client, channelId) {
   }
 }
 
+/**
+ * Post a successful ID link to the configured ID-log channel, mentioning the
+ * member. No-op if the channel isn't configured. `result` is the object from
+ * linkMemberBySteam.
+ */
+async function logIdLink(client, user, result) {
+  const cfg = permissions.getConfig();
+  const channel = await fetchChannel(client, cfg.idLogChannelId);
+  if (!channel || !channel.isTextBased?.()) return;
+
+  const embeds = require('./embeds');
+  const lines = [`**SteamID:** \`${result.steamid || '—'}\``];
+  if (result.bmPlayerId) lines.push(`**BattleMetrics:** \`${result.bmPlayerId}\``);
+  if (result.ingameName) lines.push(`**In-game:** ${result.ingameName}`);
+  if (result.rustHours != null) lines.push(`**Rust hours:** ${result.rustHours}h`);
+  if (result.status === 'steam_only') lines.push('*(BattleMetrics match pending — will resolve once they play.)*');
+
+  const embed = embeds
+    .success('🆔 ID linked', `<@${user.id}> linked their account.\n${lines.join('\n')}`)
+    .setThumbnail(user.displayAvatarURL?.() || null);
+
+  await channel.send({ content: `<@${user.id}>`, embeds: [embed] }).catch(() => {});
+}
+
 /** Send an embed (and optional components) to the configured log channel. */
 async function log(client, embed, components = []) {
   const cfg = permissions.getConfig();
@@ -169,7 +266,11 @@ module.exports = {
   allTimeScore,
   syncAllTime,
   assignRole,
+  removeRole,
+  verifyMember,
+  maybeClanInvite,
   roleErrorText,
   fetchChannel,
+  logIdLink,
   log,
 };

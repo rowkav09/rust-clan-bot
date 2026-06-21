@@ -15,7 +15,7 @@ polls and ally tracking — all backed by simple JSON flat files (no database re
 | 📋 Tasks | `/task-assign` `/task-status` `/task-list` `/task-delete` |
 | 💀 Wipe & Raids | `/wipe info\|server\|plan` `/raid` `/serverstatus` |
 | 🎮 Rust+ | `/rustplus pair\|status\|say\|map\|channel` |
-| 🦀 Clan | `/apply` `/application-review` `/warn` `/warnings` `/clearwarning` `/activity` `/member-info` |
+| 🦀 Clan | `/panel` `/apply` `/application-review` `/warn` `/warnings` `/clearwarning` `/activity` `/member-info` |
 | 🔍 Intel | `/note-add` `/note-list` `/note-delete` |
 | 📊 Polls | `/poll` |
 | 🤝 Allies | `/ally add\|list\|update\|remove` |
