@@ -26,6 +26,23 @@ function buildEmbed(server) {
   return embed;
 }
 
+let lastRename = 0;
+let lastName = null;
+
+// Rename the channel to show the live count, at most once per 10 min.
+async function maybeRename(channel, server) {
+  const name = `📊-pop-${server.players}-${server.maxPlayers}`;
+  if (name === lastName) return;
+  if (Date.now() - lastRename < 10 * 60000) return;
+  try {
+    await channel.setName(name);
+    lastName = name;
+    lastRename = Date.now();
+  } catch (err) {
+    console.error('[popTracker] rename failed:', err.message);
+  }
+}
+
 async function tick(client) {
   const id = bm.serverId();
   if (!id) return;
@@ -45,6 +62,9 @@ async function tick(client) {
     return;
   }
   if (!channel || !channel.isTextBased?.()) return;
+
+  // Also reflect the count in the channel name (rate-limited to ~10 min).
+  await maybeRename(channel, server);
 
   const embed = buildEmbed(server);
 
