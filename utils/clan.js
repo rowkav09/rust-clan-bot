@@ -184,6 +184,10 @@ async function autoVerifyOnLink(guild, userId) {
   const cfg = permissions.getConfig();
   if (!cfg.automation.autoVerifyOnLink) return null;
 
+  // Require BOTH Steam and BattleMetrics linked before granting a rank.
+  const rec = db.read('members')[userId] || {};
+  if (!rec.steamId || !rec.bmPlayerId) return null;
+
   const gm = await guild.members.fetch(userId).catch(() => null);
   if (!gm) return null;
   if (permissions.getTier(gm) >= permissions.TIER.MEMBER) return null; // already ranked

@@ -133,18 +133,34 @@ async function getPlayerServerTime(playerId, srvId = serverId()) {
 
 /** Resolve a BattleMetrics player by name. Returns the first match {id, name} or null. */
 async function findPlayerByName(name) {
-  if (!name) return null;
+  const list = await searchPlayers(name, 1);
+  return list[0] || null;
+}
+
+/** Fetch a BattleMetrics player's display name by ID (null on failure). */
+async function getPlayerName(playerId) {
+  if (!playerId) return null;
+  try {
+    const res = await axios.get(`${BASE}/players/${playerId}`, { headers: authHeaders(), timeout: 10000 });
+    return res.data?.data?.attributes?.name || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Search BattleMetrics players by name, returning up to `size` candidates. */
+async function searchPlayers(name, size = 5) {
+  if (!name) return [];
   try {
     const res = await axios.get(`${BASE}/players`, {
-      params: { 'filter[search]': name, 'page[size]': 1 },
+      params: { 'filter[search]': name, 'page[size]': size },
       headers: authHeaders(),
       timeout: 10000,
     });
-    const p = res.data?.data?.[0];
-    return p ? { id: p.id, name: p.attributes?.name } : null;
+    return (res.data?.data || []).map((p) => ({ id: p.id, name: p.attributes?.name }));
   } catch (err) {
     console.error('[battlemetrics] Player search error:', err.message);
-    return null;
+    return [];
   }
 }
 
@@ -191,14 +207,15 @@ async function resolveClanPlayer({ steamid, personaName } = {}) {
     const pid = await matchSteamId(steamid);
     if (pid) return { id: pid, name: null, source: 'steamID' };
   }
-  // 2. Name search, then confirm the candidate actually plays on our server.
-  //    (BattleMetrics' /players endpoint rejects a `filter[server]` param, so
-  //    we search by name globally and verify via the player's own record.)
+  // 2. Name search, then confirm a candidate actually plays on our server.
+  //    BattleMetrics' /players endpoint rejects a `filter[server]` param, so we
+  //    search globally and check up to 5 candidates against the clan server —
+  //    the right person is the one with a record on our server.
   if (personaName) {
-    const found = await findPlayerByName(personaName);
-    if (found) {
-      const onServer = await getPlayerServerTime(found.id, serverId());
-      if (onServer) return { id: found.id, name: found.name, source: 'nameSearch' };
+    const candidates = await searchPlayers(personaName, 5);
+    for (const c of candidates) {
+      const onServer = await getPlayerServerTime(c.id, serverId());
+      if (onServer) return { id: c.id, name: c.name, source: 'nameSearch' };
     }
   }
   return null;
@@ -208,7 +225,9 @@ module.exports = {
   getServer,
   serverId,
   getPlayerServerTime,
+  getPlayerName,
   findPlayerByName,
+  searchPlayers,
   matchSteamId,
   resolveClanPlayer,
 };

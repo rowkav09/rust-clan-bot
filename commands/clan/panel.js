@@ -14,7 +14,8 @@ const {
 const embeds = require('../../utils/embeds');
 const clan = require('../../utils/clan');
 const steam = require('../../utils/steam');
-const { linkMemberBySteam } = require('../../utils/linkplayer');
+const { linkMemberBySteam, linkMemberByBattlemetrics } = require('../../utils/linkplayer');
+const db = require('../../utils/db');
 const { requireTier, TIER, getConfig } = require('../../utils/permissions');
 const apply = require('./apply');
 
@@ -37,10 +38,18 @@ function buildIdModal() {
       new ActionRowBuilder().addComponents(
         new TextInputBuilder()
           .setCustomId('steam')
-          .setLabel('Steam profile (URL, SteamID64, or vanity)')
+          .setLabel('Steam profile (URL / SteamID64 / vanity)')
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
           .setPlaceholder('steamcommunity.com/id/yourname'),
+      ),
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('bm')
+          .setLabel('BattleMetrics profile link')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setPlaceholder('battlemetrics.com/players/1234567'),
       ),
     );
 }
@@ -61,8 +70,12 @@ module.exports = {
       .info(
         '🦀 Clan Hub',
         '**Everything in one place.**\n\n' +
-          '🆔 **Link ID** — connect your Steam / BattleMetrics so we can track & verify your hours. ' +
-          '*(Do this first.)*\n' +
+          '🆔 **Link ID** — connect your account so we can track & verify your hours. ' +
+          '*(Do this first — required for a rank.)*\n' +
+          '> You’ll be asked for **both** your **Steam** profile **and** your **BattleMetrics** profile link.\n' +
+          '> Find your BM profile: search your name at ' +
+          '[battlemetrics.com](https://www.battlemetrics.com/players) → open it → copy the URL ' +
+          '(`battlemetrics.com/players/...`).\n' +
           '🎖️ **Apply for Rank** — submit a verification application. Requires a linked ID.\n' +
           '🎭 **Request Role** — pick a specialist role (Farmer, PvPer, Builder…).',
       )
@@ -230,14 +243,33 @@ module.exports = {
   },
 
   modals: {
-    // 🆔 Link ID submission.
+    // 🆔 Link ID submission — BOTH Steam and BattleMetrics required.
     async hub_id_modal(interaction, args, client) {
       await interaction.deferReply({ ephemeral: true });
-      const steamInput = interaction.fields.getTextInputValue('steam').trim();
+      const steamInput = interaction.fields.getTextInputValue('steam')?.trim();
+      const bmInput = interaction.fields.getTextInputValue('bm')?.trim();
 
-      let result;
+      const notes = [];
+      let steamOk = false;
+      let bmOk = false;
       try {
-        result = await linkMemberBySteam(interaction.user, steamInput);
+        // BattleMetrics link is the reliable tracking path — do it first.
+        const bmRes = await linkMemberByBattlemetrics(interaction.user, bmInput);
+        if (bmRes.status === 'bad_bm') {
+          notes.push('❌ BattleMetrics: couldn’t read that link — use `battlemetrics.com/players/<number>`.');
+        } else {
+          bmOk = true;
+          notes.push(`✅ BattleMetrics linked: \`${bmRes.bmPlayerId}\`${bmRes.ingameName ? ` (**${bmRes.ingameName}**)` : ''}.`);
+        }
+
+        const steamRes = await linkMemberBySteam(interaction.user, steamInput);
+        if (steamRes.status === 'no_steam') {
+          notes.push('❌ Steam: couldn’t read that profile — use a full profile URL, SteamID64, or vanity name.');
+        } else {
+          steamOk = true;
+          const hrs = steamRes.rustHours != null ? ` · **${steamRes.rustHours}h** Rust` : '';
+          notes.push(`✅ Steam linked${hrs}.`);
+        }
       } catch (err) {
         console.error('[panel] link error:', err.message);
         return interaction.editReply({
@@ -245,45 +277,33 @@ module.exports = {
         });
       }
 
-      if (result.status === 'no_steam') {
+      // Both are required to be verified.
+      if (!steamOk || !bmOk) {
         return interaction.editReply({
           embeds: [
-            embeds.error(
-              'Couldn’t read that profile',
-              steam.hasKey()
-                ? 'That doesn’t look like a valid Steam profile. Use a full profile URL, a SteamID64, or a vanity name.'
-                : 'No Steam API key is set, so I can only read **`/profiles/<id>`** URLs or a raw SteamID64.',
+            embeds.warning(
+              'Not fully linked',
+              notes.join('\n') + '\n\n**Both Steam and BattleMetrics are required.** Fix the ❌ above and run **🆔 Link ID** again.',
             ),
           ],
         });
       }
 
-      // Log the link to the ID-log channel (mentions the member).
+      // Both linked → log the card + verify (grant rank, drop Unverified).
+      const rec = db.read('members')[interaction.user.id] || {};
+      const result = {
+        steamid: rec.steamId || null,
+        bmPlayerId: rec.bmPlayerId || null,
+        ingameName: rec.ingameName || null,
+        rustHours: rec.steamRustHours ?? null,
+        status: 'linked',
+      };
       clan.logIdLink(client, interaction.user, result).catch(() => {});
-
-      // Linking an ID = verified → grant the rank and drop Unverified.
       const verifyNote = (await clan.autoVerifyOnLink(interaction.guild, interaction.user.id).catch(() => null)) || '';
-
-      const hoursLine = result.rustHours != null ? `\n🕒 Rust hours: **${result.rustHours}h**` : '';
-      if (result.status === 'linked') {
-        return interaction.editReply({
-          embeds: [
-            embeds.success(
-              'ID linked! 🎉',
-              `Linked to BattleMetrics \`${result.bmPlayerId}\`${result.ingameName ? ` (**${result.ingameName}**)` : ''}.` +
-                `${hoursLine}${verifyNote}\n\nTime tracks automatically. 🦀`,
-            ),
-          ],
-        });
-      }
 
       return interaction.editReply({
         embeds: [
-          embeds.warning(
-            'ID saved — BattleMetrics pending',
-            `Saved your Steam profile.${hoursLine}${verifyNote}\n\nI couldn’t match a BattleMetrics profile on the clan server yet — ` +
-              'it usually resolves once you’ve **played on the server**.',
-          ),
+          embeds.success('ID linked! 🎉', notes.join('\n') + verifyNote + '\n\nYour in-game time will now track automatically. 🦀'),
         ],
       });
     },

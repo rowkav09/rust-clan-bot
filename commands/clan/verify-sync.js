@@ -60,25 +60,21 @@ module.exports = {
     } else if (!idChannel || !idChannel.isTextBased?.()) {
       channelNote = '\n⚠️ The configured ID channel is unavailable.';
     } else {
-      // Scan recent history so we never duplicate someone already posted
-      // (covers cards posted before the idPosted flag existed).
+      // Scan recent history for already-posted INDIVIDUAL cards only (title
+      // "ID linked") — ignore the old bulk roster list so it doesn't block cards.
       const postedIds = new Set();
-      const postedSteam = new Set();
       try {
         const history = await idChannel.messages.fetch({ limit: 100 });
         for (const msg of history.values()) {
           if (msg.author.id !== client.user.id) continue;
-          let text = msg.content || '';
-          for (const e of msg.embeds) text += `\n${e.title || ''}\n${e.description || ''}`;
-          for (const mm of text.matchAll(/<@!?(\d+)>/g)) postedIds.add(mm[1]);
-          for (const mm of text.matchAll(/\b(7656\d{13})\b/g)) postedSteam.add(mm[1]);
+          const isCard = msg.embeds.some((e) => (e.title || '').includes('ID linked'));
+          if (!isCard) continue;
+          for (const mm of (msg.content || '').matchAll(/<@!?(\d+)>/g)) postedIds.add(mm[1]);
         }
       } catch { /* ignore history fetch failures */ }
 
       for (const [id, m] of linked) {
-        const already = m.idPosted || postedIds.has(id) || postedSteam.has(m.steamId);
-        if (already) {
-          if (!m.idPosted) m.idPosted = true; // backfill the flag
+        if (postedIds.has(id)) {
           skipped += 1;
           continue;
         }
@@ -91,10 +87,9 @@ module.exports = {
           rustHours: m.steamRustHours ?? null,
           status: m.bmPlayerId ? 'linked' : 'steam_only',
         };
-        await clan.logIdLink(client, user, result); // posts the card + sets idPosted
+        await clan.logIdLink(client, user, result);
         synced += 1;
       }
-      db.write('members', members); // persist backfilled idPosted flags
     }
 
     // ── Summary ────────────────────────────────────────────────────────

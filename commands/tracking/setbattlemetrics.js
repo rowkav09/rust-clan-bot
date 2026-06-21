@@ -37,10 +37,11 @@ module.exports = {
       });
     }
 
-    // Resolve a name to a player ID if the input isn't already numeric.
-    let playerId = input;
+    // Accept a BattleMetrics profile URL or numeric ID directly; else search by name.
+    const { extractBmId } = require('../../utils/linkplayer');
+    let playerId = extractBmId(input);
     let resolvedName = null;
-    if (!/^\d+$/.test(input)) {
+    if (!playerId) {
       const found = await bm.findPlayerByName(input);
       if (!found) {
         return interaction.editReply({

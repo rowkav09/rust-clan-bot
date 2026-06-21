@@ -67,4 +67,43 @@ async function linkMemberBySteam(user, steamInput) {
   return result;
 }
 
-module.exports = { linkMemberBySteam };
+/**
+ * Extract a BattleMetrics player ID from a profile URL or a raw numeric ID.
+ * Rejects 17-digit SteamID64s so they aren't mistaken for BM IDs.
+ */
+function extractBmId(input) {
+  if (!input) return null;
+  const s = String(input).trim();
+  const url = s.match(/battlemetrics\.com\/players\/(\d+)/i);
+  if (url) return url[1];
+  if (/^\d{1,16}$/.test(s)) return s; // bare BM id (BM ids are shorter than a SteamID64)
+  return null;
+}
+
+/**
+ * Link a Discord user directly to a BattleMetrics player (from a profile link
+ * or numeric ID). This is the reliable path — no name guessing.
+ * @returns {Promise<{status:'linked'|'bm_set'|'bad_bm', bmPlayerId:string|null, ingameName:string|null}>}
+ */
+async function linkMemberByBattlemetrics(user, bmInput) {
+  const id = extractBmId(bmInput);
+  if (!id) return { status: 'bad_bm', bmPlayerId: null, ingameName: null };
+
+  const [info, name] = await Promise.all([bm.getPlayerServerTime(id), bm.getPlayerName(id)]);
+
+  const members = db.read('members');
+  const rec = clan.ensureMember(members, user);
+  rec.bmPlayerId = String(id);
+  rec.bmLast = info ? info.timePlayed : null; // baseline — only future time counts
+  if (name) rec.ingameName = rec.ingameName || name;
+  clan.touch(rec);
+  db.write('members', members);
+
+  return {
+    status: info ? 'linked' : 'bm_set', // bm_set = saved but not seen on the server yet
+    bmPlayerId: String(id),
+    ingameName: rec.ingameName || name || null,
+  };
+}
+
+module.exports = { linkMemberBySteam, linkMemberByBattlemetrics, extractBmId };
