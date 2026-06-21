@@ -15,6 +15,10 @@ const MILESTONES = [
   [15 * 60000, '15 minutes'],
 ];
 
+// The job runs every 10 min; only fire a milestone when we're crossing it
+// (i.e. within roughly one tick of the mark) — never for everything below it.
+const WINDOW_MS = 11 * 60000;
+
 // Remember which milestones we've fired, keyed by `${wipeISO}:${ms}`.
 const fired = new Set();
 
@@ -30,7 +34,9 @@ async function tick(client) {
   const typeLabel = next.type ? wipeinfo.wipeTypeLabel(next.type) : 'Wipe';
 
   for (const [ms, label] of MILESTONES) {
-    if (remaining > ms) continue;
+    // Fire only while remaining is just below the milestone, not for every
+    // smaller threshold. Larger milestones already passed are silently skipped.
+    if (remaining > ms || remaining <= ms - WINDOW_MS) continue;
     const key = `${wipeKey}:${ms}`;
     if (fired.has(key)) continue;
     fired.add(key);

@@ -37,6 +37,8 @@ function getConfig() {
 
     // Optional extra wiring for automation features.
     inGameRoleId: cfg.inGameRoleId || process.env.INGAME_ROLE_ID || null,
+    // Channel where members paste their Steam profile to auto-link.
+    linkChannelId: cfg.linkChannelId || process.env.LINK_CHANNEL_ID || null,
     popAlertChannelId:
       cfg.popAlertChannelId || cfg.logChannelId || process.env.LOG_CHANNEL_ID || null,
 

@@ -16,6 +16,9 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
+    // Required to read pasted Steam profiles in the link channel.
+    // Enable "Message Content Intent" in the Discord Developer Portal → Bot.
+    GatewayIntentBits.MessageContent,
   ],
   partials: [Partials.Channel, Partials.Message, Partials.GuildMember],
 });

@@ -136,4 +136,65 @@ async function findPlayerByName(name) {
   }
 }
 
-module.exports = { getServer, serverId, getPlayerServerTime, findPlayerByName };
+/**
+ * Match a SteamID64 to a BattleMetrics player ID via the match endpoint.
+ * Returns the player id string, or null if no match / not permitted.
+ */
+async function matchSteamId(steamid64) {
+  if (!steamid64) return null;
+  try {
+    const res = await axios.post(
+      `${BASE}/players/match`,
+      { data: [{ type: 'identifier', attributes: { type: 'steamID', identifier: String(steamid64) } }] },
+      { headers: { ...authHeaders(), 'Content-Type': 'application/json' }, timeout: 10000 },
+    );
+    const entry = res.data?.data?.[0];
+    const pid = entry?.relationships?.player?.data?.id;
+    return pid || null;
+  } catch (err) {
+    console.error('[battlemetrics] steam match error:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Best-effort resolve a member to a BM player on the clan server.
+ * Tries SteamID match first, then a name search filtered to the server.
+ * @returns {Promise<{id:string, name:string|null, source:string}|null>}
+ */
+async function resolveClanPlayer({ steamid, personaName } = {}) {
+  // 1. Exact SteamID match.
+  if (steamid) {
+    const pid = await matchSteamId(steamid);
+    if (pid) return { id: pid, name: null, source: 'steamID' };
+  }
+  // 2. Name search confirmed against the clan server.
+  if (personaName) {
+    const srv = serverId();
+    try {
+      const res = await axios.get(`${BASE}/players`, {
+        params: {
+          'filter[search]': personaName,
+          'filter[server]': srv || undefined,
+          'page[size]': 1,
+        },
+        headers: authHeaders(),
+        timeout: 10000,
+      });
+      const p = res.data?.data?.[0];
+      if (p) return { id: p.id, name: p.attributes?.name, source: 'nameSearch' };
+    } catch (err) {
+      console.error('[battlemetrics] resolve name error:', err.message);
+    }
+  }
+  return null;
+}
+
+module.exports = {
+  getServer,
+  serverId,
+  getPlayerServerTime,
+  findPlayerByName,
+  matchSteamId,
+  resolveClanPlayer,
+};

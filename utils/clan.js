@@ -25,6 +25,8 @@ function defaultMember(user) {
     bmLast: null, // last observed timePlayed (seconds) on the clan server
     online: false, // live in-game status (from BattleMetrics sync)
     promoted: false, // has been auto-promoted Recruit -> Member
+    steamId: null, // linked SteamID64
+    steamRustHours: null, // verified Rust hours from Steam
   };
 }
 

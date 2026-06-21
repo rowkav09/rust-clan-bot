@@ -60,6 +60,14 @@ module.exports = {
     )
     .addSubcommand((s) =>
       s
+        .setName('link-channel')
+        .setDescription('Set the channel where members paste their Steam profile to auto-link.')
+        .addChannelOption((o) =>
+          o.setName('channel').setDescription('Steam-link channel.').addChannelTypes(ChannelType.GuildText).setRequired(true),
+        ),
+    )
+    .addSubcommand((s) =>
+      s
         .setName('promotion')
         .setDescription('Set Recruit→Member promotion thresholds.')
         .addNumberOption((o) => o.setName('hours').setDescription('Total hours required.').setMinValue(0))
@@ -96,6 +104,7 @@ module.exports = {
         .addFields(
           { name: 'Features', value: featureLines },
           { name: 'In-game role', value: role(merged.inGameRoleId), inline: true },
+          { name: 'Steam-link channel', value: merged.linkChannelId ? `<#${merged.linkChannelId}>` : '*unset*', inline: true },
           { name: 'Pop alert channel', value: merged.popAlertChannelId ? `<#${merged.popAlertChannelId}>` : '*unset*', inline: true },
           {
             name: 'Pop alert',
@@ -142,6 +151,22 @@ module.exports = {
       db.write('config', cfg);
       return interaction.reply({
         embeds: [embeds.success('Updated', `In-game role set to ${roleObj}.`)],
+        ephemeral: true,
+      });
+    }
+
+    if (sub === 'link-channel') {
+      const channel = interaction.options.getChannel('channel', true);
+      cfg.linkChannelId = channel.id;
+      db.write('config', cfg);
+      return interaction.reply({
+        embeds: [
+          embeds.success(
+            'Updated',
+            `Members can now paste their Steam profile in ${channel} to auto-link ` +
+              'their BattleMetrics tracking.',
+          ),
+        ],
         ephemeral: true,
       });
     }
