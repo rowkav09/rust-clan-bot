@@ -13,7 +13,31 @@ const permissions = require('../utils/permissions');
  * - Hours: cumulative `timePlayed` delta → wipe + total hours (can't miss sessions).
  * - Online status: stored on the record and reflected via an optional "in-game" role.
  */
+let running = false;
+let lastSyncAt = 0;
+
+// How often to re-attempt resolving a member who hasn't matched yet.
+const RESOLVE_RETRY_MS = 60 * 60 * 1000; // 1 hour
+
 async function tick(client) {
+  if (running) return; // never overlap two syncs (avoids hammering BattleMetrics)
+  running = true;
+  try {
+    await runSync(client);
+  } finally {
+    running = false;
+    lastSyncAt = Date.now();
+  }
+}
+
+/** Run the sync only if the last one finished more than `maxAgeMs` ago. */
+async function syncIfStale(client, maxAgeMs = 120000) {
+  if (running || Date.now() - lastSyncAt < maxAgeMs) return false;
+  await tick(client);
+  return true;
+}
+
+async function runSync(client) {
   const srvId = bm.serverId();
   if (!srvId) return;
 
@@ -30,14 +54,19 @@ async function tick(client) {
   let unresolved = 0;
   for (const [, m] of Object.entries(members)) {
     // Self-heal: members who only linked Steam get their BattleMetrics player
-    // resolved here once BM has seen them on the server.
+    // resolved here — throttled to once an hour so unmatchable members don't
+    // hammer the API every tick.
     if (!m.bmPlayerId && m.steamId) {
-      const resolved = await bm.resolveClanPlayer({ steamid: m.steamId, personaName: m.ingameName });
-      if (resolved) {
-        m.bmPlayerId = String(resolved.id);
-        if (resolved.name && !m.ingameName) m.ingameName = resolved.name;
+      const now = Date.now();
+      if (!m.bmTriedAt || now - m.bmTriedAt > RESOLVE_RETRY_MS) {
+        m.bmTriedAt = now;
         changed = true;
-        console.log(`[battlemetricsSync] Resolved ${m.username} → BM ${m.bmPlayerId} (${resolved.source}).`);
+        const resolved = await bm.resolveClanPlayer({ steamid: m.steamId, personaName: m.ingameName });
+        if (resolved) {
+          m.bmPlayerId = String(resolved.id);
+          if (resolved.name && !m.ingameName) m.ingameName = resolved.name;
+          console.log(`[battlemetricsSync] Resolved ${m.username} → BM ${m.bmPlayerId} (${resolved.source}).`);
+        }
       }
     }
     if (!m.bmPlayerId) {
@@ -143,4 +172,5 @@ module.exports = {
     setTimeout(() => tick(client).catch(() => {}), 15000);
   },
   tick,
+  syncIfStale,
 };

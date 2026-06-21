@@ -29,11 +29,12 @@ module.exports = {
 
     const type = interaction.options.getString('type') || 'wipe';
 
-    // Pull fresh hours/online from BattleMetrics before showing the board.
+    // Pull fresh hours/online from BattleMetrics before showing the board —
+    // debounced so rapid /leaderboard calls don't hammer the API.
     if (bm.serverId()) {
       await interaction.deferReply();
       try {
-        await require('../../jobs/battlemetricsSync').tick(client);
+        await require('../../jobs/battlemetricsSync').syncIfStale(client, 120000);
       } catch (e) {
         console.error('[leaderboard] live sync failed:', e.message);
       }
