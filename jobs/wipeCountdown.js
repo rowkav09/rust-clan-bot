@@ -11,6 +11,29 @@ const permissions = require('../utils/permissions');
 let lastName = null;
 
 async function tick(client) {
+  // Activate any scheduled server switch whose time has arrived (clan plays a
+  // different server some weeks). Re-baselines tracking automatically.
+  try {
+    const activated = await wipeinfo.activateDueScheduledServers();
+    if (activated && activated.ok) {
+      const cfg = permissions.getConfig();
+      const channel = await clan.fetchChannel(client, cfg.wipeChannelId);
+      if (channel && channel.isTextBased?.()) {
+        await channel.send({
+          embeds: [
+            embeds.success(
+              '🔄 Switched tracked server',
+              `Now tracking **${activated.server.name}**${activated.label ? ` (${activated.label})` : ''}.\n` +
+                `Re-baselined ${activated.rebased} member(s). [View on BattleMetrics](${activated.server.link})`,
+            ),
+          ],
+        }).catch(() => {});
+      }
+    }
+  } catch (err) {
+    console.error('[wipeCountdown] schedule activation failed:', err.message);
+  }
+
   // Refresh the live wipe schedule from BattleMetrics (no-op without a linked server).
   let info;
   try {
@@ -87,6 +110,12 @@ async function announceNewWipe(client, info) {
       { name: '🏛️ Monuments', value: `${wipe.mapMonuments ?? '?'}`, inline: true },
     );
 
+  const connect = wipe.connect || info.server?.address || null;
+  if (connect) {
+    embed.addFields({ name: '🔌 Connect', value: `\`\`\`client.connect ${connect}\`\`\`` });
+  }
+  const bmLink = wipe.serverLink || info.server?.link || wipeinfo.serverLink();
+  if (bmLink) embed.addFields({ name: '🔗 BattleMetrics', value: `[View server page](${bmLink})` });
   if (mapUrl) embed.addFields({ name: '🗺️ Map', value: `[Open full map on RustMaps](${mapUrl})` });
   if (mapImage) embed.setImage(mapImage);
   else if (wipe.headerImage) embed.setImage(wipe.headerImage);

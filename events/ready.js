@@ -16,6 +16,8 @@ const autoTasks = require('../jobs/autoTasks');
 const popTracker = require('../jobs/popTracker');
 const leaderboardUpdater = require('../jobs/leaderboardUpdater');
 const enemyAlert = require('../jobs/enemyAlert');
+const rustplusManager = require('../jobs/rustplusManager');
+const rustplusFcm = require('../jobs/rustplusFcm');
 
 module.exports = {
   name: Events.ClientReady,
@@ -53,6 +55,8 @@ module.exports = {
       popTracker,
       leaderboardUpdater,
       enemyAlert,
+      rustplusManager,
+      rustplusFcm,
     ];
     for (const job of jobs) {
       try {

@@ -4,7 +4,7 @@ const db = require('./db');
 const embeds = require('./embeds');
 const time = require('./time');
 const clan = require('./clan');
-const { genId } = require('./ids');
+const { genShortId } = require('./ids');
 const { getConfig } = require('./permissions');
 
 // "What for" objectives per category — the bot rotates through these.
@@ -69,14 +69,19 @@ async function eligibleAssignees(guild, category, members, tasks, limit = 1) {
 
   let pool = Object.keys(members);
 
-  // 1. Specialist role takes priority if configured.
-  if (specialistRoleId && guild) {
-    const withRole = [];
-    for (const id of pool) {
-      const gm = await guild.members.fetch(id).catch(() => null);
-      if (gm && gm.roles.cache.has(specialistRoleId)) withRole.push(id);
+  // 0. Only ever assign to real, non-bot members who are still in the server.
+  if (guild) {
+    await guild.members.fetch().catch(() => {});
+    pool = pool.filter((id) => {
+      const gm = guild.members.cache.get(id);
+      return gm && !gm.user.bot;
+    });
+
+    // 1. Specialist role takes priority if configured.
+    if (specialistRoleId) {
+      const withRole = pool.filter((id) => guild.members.cache.get(id)?.roles.cache.has(specialistRoleId));
+      if (withRole.length) pool = withRole;
     }
-    if (withRole.length) pool = withRole;
   }
 
   // 2. Prefer online, then recently active.
@@ -119,7 +124,7 @@ async function generateTasks(client, categories = null, perCategory = 1) {
       const [title, description] = nextObjective(category);
       const assignees = await eligibleAssignees(guild, category, members, tasks, 1);
 
-      const id = genId().slice(0, 8);
+      const id = genShortId(tasks);
       const task = {
         id,
         title,

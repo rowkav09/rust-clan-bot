@@ -48,6 +48,11 @@ function getConfig() {
     // Where rival-online alerts post (defaults to the log channel).
     enemyAlertChannelId:
       cfg.enemyAlertChannelId || cfg.logChannelId || process.env.LOG_CHANNEL_ID || null,
+
+    // Rust+ channels (chat bridge, events, smart alarms, status).
+    rustplusChatChannelId: cfg.rustplusChatChannelId || null,
+    rustplusEventChannelId: cfg.rustplusEventChannelId || null,
+    rustplusAlarmChannelId: cfg.rustplusAlarmChannelId || cfg.logChannelId || null,
     popAlertChannelId:
       cfg.popAlertChannelId || cfg.logChannelId || process.env.LOG_CHANNEL_ID || null,
 
@@ -91,6 +96,10 @@ function getConfig() {
       autoLeaderboard: cfg.automation?.autoLeaderboard ?? true,
       enemyAlerts: cfg.automation?.enemyAlerts ?? true,
       vcTracking: cfg.automation?.vcTracking ?? true,
+      rustplusChatBridge: cfg.automation?.rustplusChatBridge ?? true,
+      rustplusEvents: cfg.automation?.rustplusEvents ?? true,
+      rustplusDownedAlerts: cfg.automation?.rustplusDownedAlerts ?? true,
+      rustplusAlarms: cfg.automation?.rustplusAlarms ?? true,
     },
   };
 }

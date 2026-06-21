@@ -16,7 +16,7 @@ module.exports = {
         embeds: [
           embeds.error(
             'No server configured',
-            'Ask an officer to link a server with `/setserver <battlemetrics_server_id>`.',
+            'Ask a leader to link a server with `/wipe server <battlemetrics_id>`.',
           ),
         ],
         ephemeral: true,
@@ -48,6 +48,10 @@ module.exports = {
         { name: 'Seed', value: server.mapSeed ? String(server.mapSeed) : '—', inline: true },
       )
       .setDescription(`[View on BattleMetrics](${server.link})`);
+
+    if (server.address) {
+      embed.addFields({ name: '🔌 Connect', value: `\`\`\`client.connect ${server.address}\`\`\`` });
+    }
 
     return interaction.editReply({ embeds: [embed] });
   },

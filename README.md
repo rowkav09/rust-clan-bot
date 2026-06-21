@@ -13,12 +13,13 @@ polls and ally tracking — all backed by simple JSON flat files (no database re
 | ⏱️ Tracking | `/checkin` `/checkout` `/setingamename` `/stats` |
 | 🏆 Leaderboard | `/leaderboard` `/wipe-history` |
 | 📋 Tasks | `/task-assign` `/task-status` `/task-list` `/task-delete` |
-| 💀 Wipe & Raids | `/wipecountdown` `/raid` `/serverstatus` |
+| 💀 Wipe & Raids | `/wipe info\|server\|plan` `/raid` `/serverstatus` |
+| 🎮 Rust+ | `/rustplus pair\|status\|say\|map\|channel` |
 | 🦀 Clan | `/apply` `/application-review` `/warn` `/warnings` `/clearwarning` `/activity` `/member-info` |
 | 🔍 Intel | `/note-add` `/note-list` `/note-delete` |
 | 📊 Polls | `/poll` |
 | 🤝 Allies | `/ally add\|list\|update\|remove` |
-| ⚙️ Admin | `/setup` `/setwipe` `/setserver` `/wipereset` |
+| ⚙️ Admin | `/setup` `/setwipe` `/wipereset` |
 | ❓ Help | `/help` |
 
 Scheduled jobs run automatically: wipe-channel countdown, task deadline reminders,
@@ -94,9 +95,20 @@ The values in `.env` act as defaults; anything chosen via `/setup` overrides the
 
 ### Optional: BattleMetrics
 
-Run **`/setserver <battlemetrics_server_id>`** (the digits in your server's BattleMetrics
+Run **`/wipe server <battlemetrics_id>`** (the digits in your server's BattleMetrics
 URL). Add `BATTLEMETRICS_API_TOKEN` to `.env` to enable auto time-tracking — members link
 their in-game name with `/setingamename` and their hours sync every 15 minutes.
+
+Playing a different server each week? Use **`/wipe plan <id> <date>`** to queue the
+switch ahead of time, or **`/wipe server <id>`** to switch immediately. Either way the
+bot re-baselines everyone's tracking so hours keep counting correctly on the new server.
+
+### Optional: Rust+ (live chat, alarms, map, events)
+
+Run **`npm run rustplus:register`** once on the bot host (opens a browser to log in with
+Steam), then tap **Pair** on your server in the in-game Rust+ menu. The bot saves the
+server and connects automatically. Set channels with `/rustplus channel` and toggle
+features under `/automation`. See `/rustplus pair` for the full walkthrough.
 
 ---
 

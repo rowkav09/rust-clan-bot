@@ -1,0 +1,9 @@
+{
+  "server": {
+    "ip": "",
+    "port": "",
+    "playerId": "",
+    "playerToken": "",
+    "name": ""
+  }
+}

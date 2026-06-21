@@ -10,7 +10,7 @@ const {
 const db = require('../../utils/db');
 const embeds = require('../../utils/embeds');
 const time = require('../../utils/time');
-const { genId } = require('../../utils/ids');
+const { genShortId } = require('../../utils/ids');
 const { requireTier, TIER } = require('../../utils/permissions');
 
 const LETTERS = ['🇦', '🇧', '🇨', '🇩'];
@@ -112,7 +112,8 @@ module.exports = {
       .map((s) => s.trim());
 
     const duration = interaction.options.getInteger('duration_hours');
-    const id = genId().slice(0, 8);
+    const polls = db.read('polls');
+    const id = genShortId(polls);
     const now = new Date();
     const poll = {
       id,
@@ -132,7 +133,6 @@ module.exports = {
     const msg = await interaction.fetchReply();
     poll.messageId = msg.id;
 
-    const polls = db.read('polls');
     polls[id] = poll;
     db.write('polls', polls);
   },

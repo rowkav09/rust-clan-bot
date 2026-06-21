@@ -14,7 +14,7 @@ const db = require('../../utils/db');
 const embeds = require('../../utils/embeds');
 const time = require('../../utils/time');
 const clan = require('../../utils/clan');
-const { genId } = require('../../utils/ids');
+const { genShortId } = require('../../utils/ids');
 const { requireTier, TIER, getConfig } = require('../../utils/permissions');
 
 function getRaids() {
@@ -157,7 +157,7 @@ module.exports = {
       }
 
       const raid = {
-        id: genId().slice(0, 8),
+        id: genShortId(),
         name: interaction.fields.getTextInputValue('name').trim(),
         target: interaction.fields.getTextInputValue('target').trim(),
         gridRef: interaction.fields.getTextInputValue('grid').trim() || null,

@@ -10,6 +10,7 @@ const CATEGORIES = {
       ['/checkin', 'Start a play session.'],
       ['/checkout', 'End your session and bank the hours.'],
       ['/setbattlemetrics <player>', 'Link your BattleMetrics profile for auto-tracking.'],
+      ['/setsteam <steam> [member]', 'Link a Steam profile (others = Officer+).'],
       ['/setingamename <name>', 'Set your displayed in-game name.'],
       ['/online', 'See which clan members are in-game now.'],
       ['/popgraph [hours]', 'Server population over time.'],
@@ -36,9 +37,21 @@ const CATEGORIES = {
   wipe: {
     label: '💀 Wipe & Raids',
     commands: [
-      ['/wipecountdown', 'Time until the next wipe.'],
+      ['/wipe info', 'Countdown + server info (refreshes live).'],
+      ['/wipe server <id>', 'Switch the tracked BattleMetrics server (Leader).'],
+      ['/wipe plan <id> <date>', 'Schedule a server for a future wipe (Leader).'],
       ['/raid', 'Schedule a raid with RSVPs (Member+).'],
       ['/serverstatus', 'Live BattleMetrics server status.'],
+    ],
+  },
+  rustplus: {
+    label: '🎮 Rust+',
+    commands: [
+      ['/rustplus pair', 'How to pair the bot with your server.'],
+      ['/rustplus status', 'Connection + live server status.'],
+      ['/rustplus say <message>', 'Send to in-game team chat (Member+).'],
+      ['/rustplus map', 'Post the live in-game map (Member+).'],
+      ['/rustplus channel <type> <channel>', 'Set chat/events/alarm channels (Leader).'],
     ],
   },
   clan: {
@@ -46,6 +59,7 @@ const CATEGORIES = {
     commands: [
       ['/apply', 'Apply to join the clan.'],
       ['/applypanel [channel]', 'Post a public apply button + tickets (Leader).'],
+      ['/rolepanel [channel]', 'Post a role-picker panel (Leader).'],
       ['/application-review [id]', 'Review applications (Officer+).'],
       ['/warn <member> ...', 'Issue a warning (Officer+).'],
       ['/warnings <member>', 'List active warnings (Officer+).'],
@@ -83,7 +97,7 @@ const CATEGORIES = {
       ['/setup', 'Configure roles & channels (Leader).'],
       ['/automation ...', 'Configure automation features (Leader).'],
       ['/setwipe ...', 'Edit wipe metadata (Leader).'],
-      ['/setserver <id>', 'Link BattleMetrics server (Leader).'],
+      ['/wipe server <id>', 'Link/switch BattleMetrics server (Leader).'],
       ['/wipereset', 'Archive wipe & start fresh (Leader).'],
     ],
   },

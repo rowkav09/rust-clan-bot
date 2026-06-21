@@ -31,7 +31,7 @@ module.exports = {
         embeds: [
           embeds.error(
             'No server linked',
-            'A leader must link the clan server first with `/setserver <battlemetrics_server_id>`.',
+            'A leader must link the clan server first with `/wipe server <battlemetrics_id>`.',
           ),
         ],
       });

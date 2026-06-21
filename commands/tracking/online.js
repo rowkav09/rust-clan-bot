@@ -27,7 +27,7 @@ module.exports = {
           embeds.info(
             'Live status unavailable',
             'No BattleMetrics server is linked, so live in-game status isn’t tracked. ' +
-              'A leader can run `/setserver`.',
+              'A leader can run `/wipe server <battlemetrics_id>`.',
           ),
         ],
         ephemeral: true,

@@ -99,7 +99,7 @@ async function handleStatusChange(client, guild, cfg, member, online) {
 module.exports = {
   start(client) {
     if (!bm.serverId()) {
-      console.log('[battlemetricsSync] Disabled (no server linked — run /setserver).');
+      console.log('[battlemetricsSync] Disabled (no server linked — run /wipe server).');
       return;
     }
     console.log('[battlemetricsSync] Enabled — syncing linked players every 15 minutes.');

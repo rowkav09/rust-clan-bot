@@ -7,6 +7,7 @@
   "mapSize": 3500,
   "mapImage": null,
   "headerImage": null,
+  "connect": null,
   "battlemetricsServerId": null,
   "lastWipe": null,
   "nextWipe": null,

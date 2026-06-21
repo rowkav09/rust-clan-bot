@@ -18,6 +18,10 @@ const FEATURES = [
   ['autoLeaderboard', 'Auto-updating leaderboard'],
   ['enemyAlerts', 'Rival online alerts'],
   ['vcTracking', 'Voice-channel time tracking'],
+  ['rustplusChatBridge', 'Rust+ team chat bridge'],
+  ['rustplusEvents', 'Rust+ game events (cargo/heli)'],
+  ['rustplusDownedAlerts', 'Rust+ teammate-down alerts'],
+  ['rustplusAlarms', 'Rust+ smart alarms'],
 ];
 
 module.exports = {

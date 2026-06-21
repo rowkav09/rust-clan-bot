@@ -26,18 +26,16 @@ function buildEmbed(server) {
   return embed;
 }
 
-let lastRename = 0;
 let lastName = null;
 
-// Rename the channel to show the live count, at most once per 10 min.
+// Rename the channel to show the live count whenever it changes.
+// The job runs every 5 min, matching Discord's 2-renames-per-10-min limit.
 async function maybeRename(channel, server) {
   const name = `📊-pop-${server.players}-${server.maxPlayers}`;
   if (name === lastName) return;
-  if (Date.now() - lastRename < 10 * 60000) return;
   try {
     await channel.setName(name);
     lastName = name;
-    lastRename = Date.now();
   } catch (err) {
     console.error('[popTracker] rename failed:', err.message);
   }

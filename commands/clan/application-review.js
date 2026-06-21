@@ -50,7 +50,16 @@ async function finalizeApplication(interaction, decision, client) {
   let roleNote = '';
   if (decision === 'accept') {
     const cfg = getConfig();
-    if (cfg.recruitRoleId && cfg.automation.autoRecruitRole) {
+    if (!cfg.automation.autoRecruitRole) {
+      roleNote =
+        '\nℹ️ No role was assigned because **Auto-give Recruit role** is turned off. ' +
+        'Enable it with `/automation toggle feature:autoRecruitRole enabled:true`, ' +
+        'or assign the role manually.';
+    } else if (!cfg.recruitRoleId) {
+      roleNote =
+        '\n⚠️ No recruit role is configured, so none was assigned. ' +
+        'Set one with `/setup` (or `/automation`).';
+    } else {
       const res = await clan.assignRole(interaction.guild, app.userId, cfg.recruitRoleId);
       if (!res.ok) {
         roleNote = `\n⚠️ Could not assign the recruit role: ${clan.roleErrorText(res.reason, cfg.recruitRoleId)}`;

@@ -11,7 +11,7 @@ const db = require('../../utils/db');
 const embeds = require('../../utils/embeds');
 const time = require('../../utils/time');
 const clan = require('../../utils/clan');
-const { genId } = require('../../utils/ids');
+const { genShortId } = require('../../utils/ids');
 const { requireTier, TIER } = require('../../utils/permissions');
 
 const CATEGORIES = ['farm', 'pvp', 'build', 'scout', 'defend', 'other'];
@@ -113,8 +113,8 @@ module.exports = {
       }
 
       const now = new Date().toISOString();
-      const id = genId().slice(0, 8);
       const tasks = db.read('tasks');
+      const id = genShortId(tasks);
       tasks[id] = {
         id,
         title,

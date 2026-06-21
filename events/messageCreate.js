@@ -23,6 +23,26 @@ module.exports = {
   async execute(message) {
     if (message.author.bot || !message.guild) return;
     const cfg = getConfig();
+
+    // ── Rust+ chat bridge: relay Discord messages → in-game team chat ──
+    if (cfg.rustplusChatChannelId && message.channel.id === cfg.rustplusChatChannelId) {
+      if (cfg.automation.rustplusChatBridge && message.content?.trim()) {
+        const rustplus = require('../utils/rustplus');
+        if (rustplus.isReady()) {
+          const author = message.member?.displayName || message.author.username;
+          // Rust team chat caps messages, so keep it short.
+          const text = `[${author}] ${message.content}`.slice(0, 128);
+          rustplus
+            .say(text)
+            .then(() => message.react('🎮').catch(() => {}))
+            .catch(() => message.react('⚠️').catch(() => {}));
+        } else {
+          message.react('🔌').catch(() => {}); // not connected
+        }
+      }
+      return;
+    }
+
     if (!cfg.linkChannelId || message.channel.id !== cfg.linkChannelId) return;
 
     const steamInput = extractSteamInput(message.content);
