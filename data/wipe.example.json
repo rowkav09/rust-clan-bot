@@ -5,7 +5,13 @@
   "serverName": "Unconfigured Server",
   "mapSeed": null,
   "mapSize": 3500,
+  "mapImage": null,
+  "headerImage": null,
   "battlemetricsServerId": null,
+  "lastWipe": null,
+  "nextWipe": null,
+  "nextWipeType": null,
+  "wipeSchedule": [],
   "currentRaids": [],
   "raidHistory": []
 }

@@ -87,6 +87,17 @@ async function finalizeApplication(interaction, decision, client) {
       ephemeral: true,
     });
   }
+
+  // If this was handled in a ticket thread, archive + lock it.
+  try {
+    if (interaction.channel?.isThread?.()) {
+      await interaction.channel.send({
+        embeds: [embeds.info('Ticket closed', `Decision: **${app.status}** by <@${interaction.user.id}>.`)],
+      });
+      await interaction.channel.setLocked(true).catch(() => {});
+      await interaction.channel.setArchived(true).catch(() => {});
+    }
+  } catch { /* ignore */ }
 }
 
 module.exports = {

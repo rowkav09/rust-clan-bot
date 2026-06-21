@@ -37,10 +37,13 @@ module.exports = {
 
     const wipe = db.read('wipe');
     wipe.battlemetricsServerId = id;
-    wipe.serverName = server.name;
-    if (server.mapSeed) wipe.mapSeed = String(server.mapSeed);
-    if (server.mapSize) wipe.mapSize = Number(server.mapSize);
     db.write('wipe', wipe);
+
+    // Pull the live wipe schedule + map info now that the server is linked.
+    const wipeinfo = require('../../utils/wipeinfo');
+    await wipeinfo.refreshFromBM();
+    const next = wipeinfo.getNextWipe();
+    const time = require('../../utils/time');
 
     return interaction.editReply({
       embeds: [
@@ -48,8 +51,12 @@ module.exports = {
           'Server linked',
           `**${server.name}**\n` +
             `Players: ${server.players}/${server.maxPlayers}\n` +
+            `Map: ${server.mapSize || '?'} · seed ${server.mapSeed || '?'}\n` +
+            (next.source === 'battlemetrics'
+              ? `Next wipe: ${time.relative(next.date)}${next.type ? ` (${wipeinfo.wipeTypeLabel(next.type)})` : ''}\n`
+              : '') +
             `[View on BattleMetrics](${server.link})\n\n` +
-            'Live status and (if an API token is set) auto time-tracking are now enabled.',
+            'Live status, **auto wipe schedule**, and (with an API token) auto time-tracking are now enabled.',
         ),
       ],
     });

@@ -34,6 +34,48 @@ function getConfig() {
       cfg.applicationChannelId || process.env.APPLICATION_CHANNEL_ID || null,
     raidChannelId: cfg.raidChannelId || process.env.RAID_CHANNEL_ID || null,
     wipeChannelId: cfg.wipeChannelId || process.env.WIPE_CHANNEL_ID || null,
+
+    // Optional extra wiring for automation features.
+    inGameRoleId: cfg.inGameRoleId || process.env.INGAME_ROLE_ID || null,
+    popAlertChannelId:
+      cfg.popAlertChannelId || cfg.logChannelId || process.env.LOG_CHANNEL_ID || null,
+
+    // Discord role to assign per task category (the "specialists" for that work).
+    specialistRoles: cfg.specialistRoles || {
+      farm: null,
+      pvp: null,
+      build: null,
+      scout: null,
+      defend: null,
+    },
+
+    // Promotion thresholds: Recruit -> Member.
+    promotion: {
+      hours: cfg.promotion?.hours ?? 10,
+      raids: cfg.promotion?.raids ?? 1,
+      days: cfg.promotion?.days ?? 3,
+    },
+
+    // Population-alert tuning.
+    popAlert: {
+      // Fraction of max players that counts as "popping" (0-1).
+      highFraction: cfg.popAlert?.highFraction ?? 0.85,
+      // Alert when a queue forms.
+      alertOnQueue: cfg.popAlert?.alertOnQueue ?? true,
+      // Minimum minutes between alerts.
+      cooldownMin: cfg.popAlert?.cooldownMin ?? 60,
+    },
+
+    // Master automation toggles (default ON except the destructive auto-wipe-reset).
+    automation: {
+      autoWipeReset: cfg.automation?.autoWipeReset ?? false,
+      autoCheckInOut: cfg.automation?.autoCheckInOut ?? true,
+      autoPromote: cfg.automation?.autoPromote ?? true,
+      popAlerts: cfg.automation?.popAlerts ?? true,
+      preWipeReminders: cfg.automation?.preWipeReminders ?? true,
+      raidReminders: cfg.automation?.raidReminders ?? true,
+      autoTasks: cfg.automation?.autoTasks ?? true,
+    },
   };
 }
 

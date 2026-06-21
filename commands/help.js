@@ -9,7 +9,9 @@ const CATEGORIES = {
     commands: [
       ['/checkin', 'Start a play session.'],
       ['/checkout', 'End your session and bank the hours.'],
-      ['/setingamename <name>', 'Link your Rust name for auto-tracking.'],
+      ['/setbattlemetrics <player>', 'Link your BattleMetrics profile for auto-tracking.'],
+      ['/setingamename <name>', 'Set your displayed in-game name.'],
+      ['/online', 'See which clan members are in-game now.'],
       ['/stats [member]', 'View play-time & activity stats.'],
     ],
   },
@@ -24,6 +26,7 @@ const CATEGORIES = {
     label: '📋 Tasks',
     commands: [
       ['/task-assign', 'Create & assign a task (Officer+).'],
+      ['/task-auto [category]', 'Auto-generate & assign tasks (Officer+).'],
       ['/task-status <id> <status>', 'Update a task’s status.'],
       ['/task-list [filters]', 'List tasks.'],
       ['/task-delete <id>', 'Delete a task (Officer+).'],
@@ -41,6 +44,7 @@ const CATEGORIES = {
     label: '🦀 Clan',
     commands: [
       ['/apply', 'Apply to join the clan.'],
+      ['/applypanel [channel]', 'Post a public apply button + tickets (Leader).'],
       ['/application-review [id]', 'Review applications (Officer+).'],
       ['/warn <member> ...', 'Issue a warning (Officer+).'],
       ['/warnings <member>', 'List active warnings (Officer+).'],
@@ -74,6 +78,7 @@ const CATEGORIES = {
     label: '⚙️ Admin',
     commands: [
       ['/setup', 'Configure roles & channels (Leader).'],
+      ['/automation ...', 'Configure automation features (Leader).'],
       ['/setwipe ...', 'Edit wipe metadata (Leader).'],
       ['/setserver <id>', 'Link BattleMetrics server (Leader).'],
       ['/wipereset', 'Archive wipe & start fresh (Leader).'],

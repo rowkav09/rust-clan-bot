@@ -21,6 +21,10 @@ function defaultMember(user) {
     tasksCompleted: 0,
     warnings: 0,
     ingameName: null,
+    bmPlayerId: null, // BattleMetrics player ID for auto time-tracking
+    bmLast: null, // last observed timePlayed (seconds) on the clan server
+    online: false, // live in-game status (from BattleMetrics sync)
+    promoted: false, // has been auto-promoted Recruit -> Member
   };
 }
 

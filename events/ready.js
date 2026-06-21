@@ -8,6 +8,11 @@ const deadlineReminder = require('../jobs/deadlineReminder');
 const activityCheck = require('../jobs/activityCheck');
 const pollExpiry = require('../jobs/pollExpiry');
 const battlemetricsSync = require('../jobs/battlemetricsSync');
+const autoPromote = require('../jobs/autoPromote');
+const popAlert = require('../jobs/popAlert');
+const preWipeReminder = require('../jobs/preWipeReminder');
+const raidReminder = require('../jobs/raidReminder');
+const autoTasks = require('../jobs/autoTasks');
 
 module.exports = {
   name: Events.ClientReady,
@@ -37,6 +42,11 @@ module.exports = {
       activityCheck,
       pollExpiry,
       battlemetricsSync,
+      autoPromote,
+      popAlert,
+      preWipeReminder,
+      raidReminder,
+      autoTasks,
     ];
     for (const job of jobs) {
       try {
