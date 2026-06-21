@@ -5,6 +5,7 @@ const db = require('../../utils/db');
 const embeds = require('../../utils/embeds');
 const time = require('../../utils/time');
 const clan = require('../../utils/clan');
+const bm = require('../../utils/battlemetrics');
 const { requireTier, TIER } = require('../../utils/permissions');
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -23,10 +24,21 @@ module.exports = {
         ),
     ),
 
-  async execute(interaction) {
+  async execute(interaction, client) {
     if (!(await requireTier(interaction, TIER.RECRUIT))) return;
 
     const type = interaction.options.getString('type') || 'wipe';
+
+    // Pull fresh hours/online from BattleMetrics before showing the board.
+    if (bm.serverId()) {
+      await interaction.deferReply();
+      try {
+        await require('../../jobs/battlemetricsSync').tick(client);
+      } catch (e) {
+        console.error('[leaderboard] live sync failed:', e.message);
+      }
+    }
+
     const members = db.read('members');
     const wipe = db.read('wipe');
 
@@ -81,6 +93,8 @@ module.exports = {
 
     const embed = embeds.leaderboard(title, `*${subtitle}*\n\n${description}`);
     embeds.withGuildIcon(embed, interaction.guild);
-    return interaction.reply({ embeds: [embed] });
+    return interaction.deferred
+      ? interaction.editReply({ embeds: [embed] })
+      : interaction.reply({ embeds: [embed] });
   },
 };
