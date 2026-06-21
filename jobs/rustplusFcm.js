@@ -83,12 +83,21 @@ async function handleNotification(data) {
     return;
   }
 
-  // ── Smart-alarm trigger → forward to Discord ─────────────────────────
+  // ── Smart-alarm trigger → loud raid / base-defense alert ─────────────
   if (n.channelId === 'alarm' || (n.title && n.message)) {
     if (!cfg.automation.rustplusAlarms) return;
-    await postTo(alarmChannel, {
-      content: '@here',
-      embeds: [embeds.warning(`🚨 ${n.title || 'Smart Alarm'}`, n.message || 'Your Rust+ smart alarm was triggered!')],
+    // Raid alerts prefer the raid channel, then the alarm/log channel.
+    const raidChannel = cfg.raidChannelId || alarmChannel;
+    const ping = cfg.automation.rustplusRaidPing ? '@everyone' : '@here';
+    await postTo(raidChannel, {
+      content: `${ping} 🚨 **BASE ALARM — RAID DEFENSE**`,
+      embeds: [
+        embeds.error(
+          `🚨 ${n.title || 'Smart Alarm Triggered'}`,
+          `${n.message || 'Your base alarm just went off!'}\n\n**Get on and defend the base! 🛡️**`,
+        ),
+      ],
+      allowedMentions: { parse: ['everyone'] },
     });
   }
 }

@@ -180,23 +180,14 @@ async function resolveClanPlayer({ steamid, personaName } = {}) {
     const pid = await matchSteamId(steamid);
     if (pid) return { id: pid, name: null, source: 'steamID' };
   }
-  // 2. Name search confirmed against the clan server.
+  // 2. Name search, then confirm the candidate actually plays on our server.
+  //    (BattleMetrics' /players endpoint rejects a `filter[server]` param, so
+  //    we search by name globally and verify via the player's own record.)
   if (personaName) {
-    const srv = serverId();
-    try {
-      const res = await axios.get(`${BASE}/players`, {
-        params: {
-          'filter[search]': personaName,
-          'filter[server]': srv || undefined,
-          'page[size]': 1,
-        },
-        headers: authHeaders(),
-        timeout: 10000,
-      });
-      const p = res.data?.data?.[0];
-      if (p) return { id: p.id, name: p.attributes?.name, source: 'nameSearch' };
-    } catch (err) {
-      console.error('[battlemetrics] resolve name error:', err.message);
+    const found = await findPlayerByName(personaName);
+    if (found) {
+      const onServer = await getPlayerServerTime(found.id, serverId());
+      if (onServer) return { id: found.id, name: found.name, source: 'nameSearch' };
     }
   }
   return null;

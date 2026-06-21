@@ -175,6 +175,26 @@ async function verifyMember(guild, userId) {
 }
 
 /**
+ * Auto-verify a member right after they link an ID: grant the verified rank and
+ * remove Unverified. Skips members who are already Member-tier or higher.
+ * Returns a short status line to append to the reply, or null if nothing done.
+ */
+async function autoVerifyOnLink(guild, userId) {
+  const cfg = permissions.getConfig();
+  if (!cfg.automation.autoVerifyOnLink) return null;
+
+  const gm = await guild.members.fetch(userId).catch(() => null);
+  if (!gm) return null;
+  if (permissions.getTier(gm) >= permissions.TIER.MEMBER) return null; // already ranked
+
+  if (!cfg.recruitRoleId) return '\n⚠️ No verified role is configured — ask a leader to run `/setup`.';
+
+  const v = await verifyMember(guild, userId);
+  if (v.roleOk) return '\n✅ You’ve been **verified** and given your rank!';
+  return `\n⚠️ Couldn’t assign your rank: ${roleErrorText(v.reason, cfg.recruitRoleId)}`;
+}
+
+/**
  * Send the configured in-game clan-invite command via Rust+ team chat, if the
  * feature is enabled, Rust+ is connected, and the member has a linked SteamID.
  * @returns {Promise<boolean>} true if a command was sent.
@@ -268,6 +288,7 @@ module.exports = {
   assignRole,
   removeRole,
   verifyMember,
+  autoVerifyOnLink,
   maybeClanInvite,
   roleErrorText,
   fetchChannel,

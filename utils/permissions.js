@@ -96,6 +96,8 @@ function getConfig() {
       autoPromote: cfg.automation?.autoPromote ?? true,
       // Assign the Unverified role automatically when someone joins.
       autoUnverifiedRole: cfg.automation?.autoUnverifiedRole ?? true,
+      // Grant the verified rank (and drop Unverified) the moment a member links an ID.
+      autoVerifyOnLink: cfg.automation?.autoVerifyOnLink ?? true,
       // Approve applications instantly on submit (skip officer review).
       autoApproveApplications: cfg.automation?.autoApproveApplications ?? false,
       popAlerts: cfg.automation?.popAlerts ?? true,
@@ -110,6 +112,8 @@ function getConfig() {
       rustplusEvents: cfg.automation?.rustplusEvents ?? true,
       rustplusDownedAlerts: cfg.automation?.rustplusDownedAlerts ?? true,
       rustplusAlarms: cfg.automation?.rustplusAlarms ?? true,
+      // Ping @everyone (vs @here) when a smart alarm / base raid alarm fires.
+      rustplusRaidPing: cfg.automation?.rustplusRaidPing ?? true,
       // Auto-send the in-game clan invite when a member is verified (modded servers).
       autoClanInvite: cfg.automation?.autoClanInvite ?? false,
     },

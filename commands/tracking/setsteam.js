@@ -73,6 +73,8 @@ module.exports = {
       });
     }
 
+    // Linking an ID = verified → grant the rank and drop Unverified.
+    const verifyNote = (await clan.autoVerifyOnLink(interaction.guild, user.id).catch(() => null)) || '';
     const hoursLine = result.rustHours != null ? `\n🕒 Rust hours: **${result.rustHours}h**` : '';
 
     if (result.status === 'linked') {
@@ -82,7 +84,7 @@ module.exports = {
             'Linked! 🎉',
             `Linked ${who} to SteamID \`${result.steamid}\` and BattleMetrics player ` +
               `\`${result.bmPlayerId}\`${result.ingameName ? ` (**${result.ingameName}**)` : ''}.` +
-              `${hoursLine}\n\nIn-game time will now track automatically every 15 minutes. 🦀`,
+              `${hoursLine}${verifyNote}\n\nIn-game time will now track automatically every 15 minutes. 🦀`,
           ),
         ],
       });
@@ -93,7 +95,7 @@ module.exports = {
       embeds: [
         embeds.warning(
           'Steam linked — BattleMetrics pending',
-          `Saved SteamID \`${result.steamid}\` for ${who}.${hoursLine}\n\n` +
+          `Saved SteamID \`${result.steamid}\` for ${who}.${hoursLine}${verifyNote}\n\n` +
             'I couldn’t match a BattleMetrics profile on the clan server yet — this usually ' +
             'resolves once they’ve **played on the server**. You can also set it directly with ' +
             '`/setbattlemetrics <player>`.',

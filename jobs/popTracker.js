@@ -8,7 +8,7 @@ const bm = require('../utils/battlemetrics');
 const popstats = require('../utils/popstats');
 const permissions = require('../utils/permissions');
 
-function buildEmbed(server) {
+async function buildEmbed(server) {
   const points = popstats.recent(24);
   const { peak, avg } = popstats.summary(points);
   const online = server.status === 'online';
@@ -22,7 +22,10 @@ function buildEmbed(server) {
     )
     .setFooter({ text: `Live · updates every 5 min · last ${new Date().toLocaleTimeString()}` });
 
-  if (points.length >= 2) embed.setImage(popstats.chartUrl(points));
+  if (points.length >= 2) {
+    const url = await popstats.chartUrl(points);
+    if (url) embed.setImage(url);
+  }
   return embed;
 }
 
@@ -64,7 +67,7 @@ async function tick(client) {
   // Also reflect the count in the channel name (rate-limited to ~10 min).
   await maybeRename(channel, server);
 
-  const embed = buildEmbed(server);
+  const embed = await buildEmbed(server);
 
   // Edit the live message if we have one; otherwise post + remember it.
   if (cfg.popMessageId) {

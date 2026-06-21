@@ -54,8 +54,11 @@ module.exports = {
     try {
       const result = await linkMemberBySteam(message.author, steamInput);
 
+      let verifyNote = '';
       if (result.status !== 'no_steam') {
         clan.logIdLink(message.client, message.author, result).catch(() => {});
+        // Linking an ID = verified → grant the rank and drop Unverified.
+        verifyNote = (await clan.autoVerifyOnLink(message.guild, message.author.id).catch(() => null)) || '';
       }
 
       if (result.status === 'no_steam') {
@@ -84,7 +87,7 @@ module.exports = {
               'All set! 🎉',
               `Linked to BattleMetrics player \`${result.bmPlayerId}\`` +
                 `${result.ingameName ? ` (**${result.ingameName}**)` : ''}.` +
-                `${hoursLine}\n\nYour in-game time will now track automatically every 15 minutes. 🦀`,
+                `${hoursLine}${verifyNote}\n\nYour in-game time will now track automatically every 15 minutes. 🦀`,
             ),
           ],
         });
@@ -98,7 +101,7 @@ module.exports = {
         embeds: [
           embeds.warning(
             'Steam linked — finishing up',
-            `Saved your Steam profile.${hoursLine}\n\n` +
+            `Saved your Steam profile.${hoursLine}${verifyNote}\n\n` +
               'I couldn’t match your BattleMetrics profile on the clan server yet — this usually ' +
               'resolves automatically once you’ve **played on the server** and BattleMetrics has seen you. ' +
               'Try again after a session, or use `/setbattlemetrics <player id>` if you know it.',

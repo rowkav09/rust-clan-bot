@@ -261,6 +261,9 @@ module.exports = {
       // Log the link to the ID-log channel (mentions the member).
       clan.logIdLink(client, interaction.user, result).catch(() => {});
 
+      // Linking an ID = verified → grant the rank and drop Unverified.
+      const verifyNote = (await clan.autoVerifyOnLink(interaction.guild, interaction.user.id).catch(() => null)) || '';
+
       const hoursLine = result.rustHours != null ? `\n🕒 Rust hours: **${result.rustHours}h**` : '';
       if (result.status === 'linked') {
         return interaction.editReply({
@@ -268,7 +271,7 @@ module.exports = {
             embeds.success(
               'ID linked! 🎉',
               `Linked to BattleMetrics \`${result.bmPlayerId}\`${result.ingameName ? ` (**${result.ingameName}**)` : ''}.` +
-                `${hoursLine}\n\nYou can now use **🎖️ Apply for Rank**. Time tracks automatically. 🦀`,
+                `${hoursLine}${verifyNote}\n\nTime tracks automatically. 🦀`,
             ),
           ],
         });
@@ -278,8 +281,8 @@ module.exports = {
         embeds: [
           embeds.warning(
             'ID saved — BattleMetrics pending',
-            `Saved your Steam profile.${hoursLine}\n\nI couldn’t match a BattleMetrics profile on the clan server yet — ` +
-              'it usually resolves once you’ve **played on the server**. You can still apply for a rank now.',
+            `Saved your Steam profile.${hoursLine}${verifyNote}\n\nI couldn’t match a BattleMetrics profile on the clan server yet — ` +
+              'it usually resolves once you’ve **played on the server**.',
           ),
         ],
       });

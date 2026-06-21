@@ -1,5 +1,6 @@
 'use strict';
 
+const axios = require('axios');
 const db = require('./db');
 
 const MAX_POINTS = 2016; // ~7 days at one sample / 5 min
@@ -34,8 +35,12 @@ function summary(points) {
   return { peak, avg, latest: points[points.length - 1] };
 }
 
-/** Build a QuickChart line-graph URL for the given points. */
-function chartUrl(points) {
+/**
+ * Build a population line-graph and return a SHORT QuickChart URL (via their
+ * create API) so it never exceeds Discord's 2048-char image-URL limit.
+ * Returns null if the chart service can't be reached.
+ */
+async function chartUrl(points) {
   const step = Math.max(1, Math.ceil(points.length / 60));
   const sampled = points.filter((_, i) => i % step === 0);
   const labels = sampled.map((p) =>
@@ -58,7 +63,18 @@ function chartUrl(points) {
       },
     },
   };
-  return `https://quickchart.io/chart?bkg=%232c2f33&w=700&h=350&c=${encodeURIComponent(JSON.stringify(config))}`;
+
+  try {
+    const res = await axios.post(
+      'https://quickchart.io/chart/create',
+      { chart: config, width: 700, height: 350, backgroundColor: '#2c2f33' },
+      { timeout: 10000 },
+    );
+    return res.data?.url || null;
+  } catch (err) {
+    console.error('[popstats] chart url error:', err.message);
+    return null;
+  }
 }
 
 module.exports = { record, recent, summary, chartUrl, MAX_POINTS };

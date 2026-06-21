@@ -10,6 +10,7 @@ const FEATURES = [
   ['autoCheckInOut', 'Auto check-in/out + in-game role'],
   ['autoPromote', 'Auto promotion (Recruit→Member)'],
   ['autoUnverifiedRole', 'Auto-give Unverified role on join'],
+  ['autoVerifyOnLink', 'Auto-verify (give rank) when ID linked'],
   ['autoApproveApplications', 'Auto-approve applications on submit'],
   ['popAlerts', 'Population alerts'],
   ['preWipeReminders', 'Pre-wipe reminders'],
@@ -23,6 +24,7 @@ const FEATURES = [
   ['rustplusEvents', 'Rust+ game events (cargo/heli)'],
   ['rustplusDownedAlerts', 'Rust+ teammate-down alerts'],
   ['rustplusAlarms', 'Rust+ smart alarms'],
+  ['rustplusRaidPing', 'Raid alarm pings @everyone'],
   ['autoClanInvite', 'Auto in-game clan invite on verify'],
 ];
 

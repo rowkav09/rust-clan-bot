@@ -59,6 +59,7 @@ const CATEGORIES = {
     label: '🦀 Clan',
     commands: [
       ['/panel [channel]', 'Post the all-in-one clan hub: ID, rank, roles (Leader).'],
+      ['/rules [channel]', 'Show the clan rules (post publicly = Leader).'],
       ['/apply', 'Apply for a rank (requires a linked ID).'],
       ['/application-review [id]', 'Review applications (Officer+).'],
       ['/verify-sync', 'Unverify ID-less members + post all IDs (Leader).'],
@@ -66,7 +67,7 @@ const CATEGORIES = {
       ['/warnings <member>', 'List active warnings (Officer+).'],
       ['/clearwarning <id>', 'Clear a warning (Leader).'],
       ['/activity', 'List inactive members (Officer+).'],
-      ['/member-info <member>', 'Full member profile (Officer+).'],
+      ['/member-info [member]', 'Member profile, stats & Rust hours.'],
       ['/dashboard', 'Clan health overview (Officer+).'],
     ],
   },

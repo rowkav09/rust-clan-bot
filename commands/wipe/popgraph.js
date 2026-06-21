@@ -33,9 +33,9 @@ module.exports = {
     }
 
     const { peak, avg } = popstats.summary(points);
-    const embed = embeds
-      .wipe(`📊 Population — last ${hours}h`, `Peak: **${peak}** · Average: **${avg}**`)
-      .setImage(popstats.chartUrl(points));
+    const embed = embeds.wipe(`📊 Population — last ${hours}h`, `Peak: **${peak}** · Average: **${avg}**`);
+    const url = await popstats.chartUrl(points);
+    if (url) embed.setImage(url);
 
     return interaction.reply({ embeds: [embed] });
   },
