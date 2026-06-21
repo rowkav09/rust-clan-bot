@@ -36,14 +36,18 @@ async function refreshFromBM() {
   if (!server) return { wipe, newWipeDetected: false, server: null };
 
   // Detect a brand-new wipe: BM's last wipe is newer than what we had recorded.
+  // Only when we already had a baseline — never on the first observation, so
+  // linking a server doesn't trigger a false "just wiped" announcement.
   const prevLast = wipe.lastWipe ? new Date(wipe.lastWipe).getTime() : 0;
   const newLast = server.lastWipe ? new Date(server.lastWipe).getTime() : 0;
-  const newWipeDetected = newLast > 0 && newLast > prevLast;
+  const newWipeDetected = prevLast > 0 && newLast > prevLast;
 
   wipe.serverName = server.name || wipe.serverName;
   wipe.mapSeed = server.mapSeed != null ? String(server.mapSeed) : wipe.mapSeed;
   wipe.mapSize = server.mapSize != null ? Number(server.mapSize) : wipe.mapSize;
   wipe.mapImage = server.mapImage || wipe.mapImage || null;
+  wipe.mapUrl = server.mapUrl || wipe.mapUrl || null;
+  wipe.mapMonuments = server.mapMonuments ?? wipe.mapMonuments ?? null;
   wipe.headerImage = server.headerImage || wipe.headerImage || null;
   wipe.lastWipe = server.lastWipe || wipe.lastWipe || null;
   wipe.nextWipe = server.nextWipe || null;

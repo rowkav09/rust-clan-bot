@@ -70,8 +70,9 @@ async function getServer(id = serverId(), includePlayers = false) {
       mapName: details.map || 'Unknown',
       mapSeed: maps.seed ?? details.rust_world_seed ?? null,
       mapSize: maps.size ?? details.rust_world_size ?? null,
-      mapImage: maps.thumbnailUrl || maps.url || null,
-      mapUrl: maps.url || null,
+      mapImage: maps.thumbnailUrl || maps.imageIconUrl || null,
+      mapUrl: maps.url || null, // RustMaps web page
+      mapMonuments: maps.monumentCount ?? null,
       headerImage: details.rust_headerimage || null,
       queue: details.rust_queued_players ?? 0,
       address: a.ip && a.port ? `${a.ip}:${a.port}` : null,

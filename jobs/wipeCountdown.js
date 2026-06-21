@@ -73,17 +73,29 @@ async function announceNewWipe(client, info) {
   if (!channel || !channel.isTextBased?.()) return;
 
   const wipe = info.wipe;
+  const mapUrl = wipe.mapUrl || info.server?.mapUrl || null;
+  const mapImage = wipe.mapImage || info.server?.mapImage || null;
+
   const embed = embeds
     .wipe(
-      '🆕 New Wipe Detected!',
-      `**${wipe.serverName || 'The server'}** just wiped.\n\n` +
-        `**Seed:** \`${wipe.mapSeed || '?'}\`  ·  **Size:** \`${wipe.mapSize || '?'}\`\n` +
-        (info.server?.mapUrl ? `[View map on RustMaps](${info.server.mapUrl})\n` : '') +
-        '\nA leader can run `/wipereset` to archive last wipe’s stats and start fresh.',
+      '🆕 The server just wiped!',
+      `**${wipe.serverName || 'The server'}** is fresh — drop in and stake a base! 🦀`,
     )
-    .setImage(wipe.mapImage || wipe.headerImage || null);
+    .addFields(
+      { name: '🌱 Seed', value: `\`${wipe.mapSeed || '?'}\``, inline: true },
+      { name: '📐 Size', value: `\`${wipe.mapSize || '?'}\``, inline: true },
+      { name: '🏛️ Monuments', value: `${wipe.mapMonuments ?? '?'}`, inline: true },
+    );
 
-  await channel.send({ content: '@here', embeds: [embed] });
+  if (mapUrl) embed.addFields({ name: '🗺️ Map', value: `[Open full map on RustMaps](${mapUrl})` });
+  if (mapImage) embed.setImage(mapImage);
+  else if (wipe.headerImage) embed.setImage(wipe.headerImage);
+
+  if (!cfg.automation.autoWipeReset) {
+    embed.setFooter({ text: 'A leader can run /wipereset to archive last wipe and start fresh.' });
+  }
+
+  await channel.send({ content: '@here 🆕 **WIPE IS LIVE!**', embeds: [embed] });
 }
 
 module.exports = {

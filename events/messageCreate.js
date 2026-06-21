@@ -7,15 +7,14 @@ const { getConfig } = require('../utils/permissions');
 const { linkMemberBySteam } = require('../utils/linkplayer');
 const steam = require('../utils/steam');
 
-// Pull a steam profile token out of arbitrary message text.
+// Only react to an actual Steam profile URL or a 17-digit SteamID64.
+// Regular chat is ignored so the channel can still be used to talk.
 function extractSteamInput(content) {
   const url = content.match(/https?:\/\/steamcommunity\.com\/(?:id|profiles)\/[^\s]+/i);
   if (url) return url[0];
-  const id = content.match(/\b\d{17}\b/);
+  const id = content.match(/(?<!\d)\d{17}(?!\d)/);
   if (id) return id[0];
-  // Otherwise treat the whole (short) message as a possible vanity name.
-  const t = content.trim();
-  return t.length > 0 && t.length <= 64 ? t : null;
+  return null;
 }
 
 module.exports = {
