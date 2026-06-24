@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'cdn.discordapp.com' },
-      { protocol: 'https', hostname: 'avatars.steamstatic.com' },
-    ],
+    unoptimized: true,
   },
 }
 
