@@ -344,16 +344,18 @@ export default function StagesPage() {
               )}
             </div>
             <div className="flex flex-col gap-1.5">
-              {[
-                { key: 'autoAssignEnabled', label: 'Auto-assign tasks' },
-                { key: 'notifyOnAssign',    label: 'Notify member in Discord' },
-              ].map(({ key, label }) => (
+              {(
+                [
+                  { key: 'autoAssignEnabled', label: 'Auto-assign tasks' },
+                  { key: 'notifyOnAssign',    label: 'Notify member in Discord' },
+                ] as { key: keyof typeof config; label: string }[]
+              ).map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-2 cursor-pointer group">
                   <button
-                    onClick={() => setConfig(c => ({ ...c, [key]: !c[key as keyof typeof c] }))}
-                    className={`relative w-8 h-4 rounded-full transition-colors ${(config as Record<string,unknown>)[key] ? 'bg-purple-500' : 'bg-dark-400'}`}
+                    onClick={() => setConfig(c => ({ ...c, [key]: !c[key] }))}
+                    className={`relative w-8 h-4 rounded-full transition-colors ${config[key] ? 'bg-purple-500' : 'bg-dark-400'}`}
                   >
-                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${(config as Record<string,unknown>)[key] ? 'translate-x-4' : ''}`} />
+                    <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${config[key] ? 'translate-x-4' : ''}`} />
                   </button>
                   <span className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">{label}</span>
                 </label>
