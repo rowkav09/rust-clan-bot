@@ -11,7 +11,7 @@ const features = [
   {
     icon: Clock,
     title: 'Time Tracking',
-    desc: 'Automatic check-in/check-out with BattleMetrics sync. Know exactly who's active each wipe.',
+    desc: "Automatic check-in/check-out with BattleMetrics sync. Know exactly who's active each wipe.",
     color: 'text-blue-400',
     bg: 'bg-blue-500/10',
   },
