@@ -240,26 +240,6 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* Self-hosting callout */}
-          <div className="rounded-2xl border border-dark-300 bg-dark-600 p-8 mb-20 flex flex-col md:flex-row items-center gap-6">
-            <div className="flex-1">
-              <div className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-2">Self-hosting</div>
-              <h3 className="text-xl font-bold text-white mb-2">Prefer to host it yourself?</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                RustClanBot is open source. Clone the repo, add your bot token, and run it on your own server for free with
-                all features unlocked. Best for technically inclined clans that want full control.
-              </p>
-            </div>
-            <div className="shrink-0 flex flex-col gap-3 min-w-[180px]">
-              <a href="#" className="btn-secondary text-sm justify-center">
-                View on GitHub
-              </a>
-              <Link href="/docs/setup" className="btn-ghost text-sm justify-center text-gray-400">
-                Self-host guide →
-              </Link>
-            </div>
-          </div>
-
           {/* FAQ */}
           <div>
             <h2 className="text-2xl font-bold text-white mb-8 text-center">Frequently asked questions</h2>

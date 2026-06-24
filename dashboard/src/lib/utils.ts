@@ -42,5 +42,5 @@ export function statusColor(s: 'pending' | 'in-progress' | 'completed') {
 }
 
 export function categoryIcon(c: string) {
-  return { farm: '⛏️', pvp: '⚔️', build: '🏗️', scout: '🔭', defend: '🛡️', admin: '⚙️' }[c] ?? '📋'
+  return ({ farm: '⛏️', pvp: '⚔️', build: '🏗️', scout: '🔭', defend: '🛡️', admin: '⚙️', none: '—' } as Record<string, string>)[c] ?? '📋'
 }
