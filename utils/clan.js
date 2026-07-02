@@ -58,21 +58,28 @@ function touch(record) {
   record.lastSeen = new Date().toISOString();
 }
 
+/** Scoring weights — defaults to the spec formula (10/25/15), dashboard-editable. */
+function scoringWeights() {
+  return permissions.getConfig().scoring;
+}
+
 /** Current-wipe score per the spec formula. */
 function wipeScore(record) {
+  const w = scoringWeights();
   return Math.round(
-    (record.currentWipeHours || 0) * 10 +
-      (record.wipeRaids || 0) * 25 +
-      (record.currentWipeTasks || 0) * 15,
+    (record.currentWipeHours || 0) * w.hours +
+      (record.wipeRaids || 0) * w.raids +
+      (record.currentWipeTasks || 0) * w.tasks,
   );
 }
 
 /** All-time score. */
 function allTimeScore(record) {
+  const w = scoringWeights();
   return Math.round(
-    (record.totalHours || 0) * 10 +
-      (record.totalRaids || 0) * 25 +
-      (record.tasksCompleted || 0) * 15,
+    (record.totalHours || 0) * w.hours +
+      (record.totalRaids || 0) * w.raids +
+      (record.tasksCompleted || 0) * w.tasks,
   );
 }
 

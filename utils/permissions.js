@@ -79,6 +79,33 @@ function getConfig() {
       days: cfg.promotion?.days ?? 3,
     },
 
+    // Leaderboard scoring weights: score = hours×H + raids×R + tasks×T.
+    scoring: {
+      hours: cfg.scoring?.hours ?? 10,
+      raids: cfg.scoring?.raids ?? 25,
+      tasks: cfg.scoring?.tasks ?? 15,
+    },
+
+    // Feature modules — turning one off disables its slash commands entirely.
+    // Managed from the web dashboard; everything defaults to enabled.
+    modules: {
+      tracking: cfg.modules?.tracking ?? true,
+      tasks: cfg.modules?.tasks ?? true,
+      wipe: cfg.modules?.wipe ?? true,
+      intel: cfg.modules?.intel ?? true,
+      polls: cfg.modules?.polls ?? true,
+      allies: cfg.modules?.allies ?? true,
+      clan: cfg.modules?.clan ?? true,
+      battlemetrics: cfg.modules?.battlemetrics ?? true,
+      rustplus: cfg.modules?.rustplus ?? true,
+    },
+
+    // BattleMetrics credentials (dashboard-managed; env vars as fallback).
+    battlemetrics: {
+      serverId: cfg.battlemetrics?.serverId || process.env.BATTLEMETRICS_SERVER_ID || null,
+      apiToken: cfg.battlemetrics?.apiToken || process.env.BATTLEMETRICS_API_TOKEN || null,
+    },
+
     // Population-alert tuning.
     popAlert: {
       // Fraction of max players that counts as "popping" (0-1).

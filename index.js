@@ -110,4 +110,13 @@ if (!process.env.BOT_TOKEN) {
   process.exit(1);
 }
 
+// ── Dashboard API ─────────────────────────────────────────────────────────────
+// Serves Discord OAuth login + config read/write for the web dashboard.
+// Failure to start must never take the bot down.
+try {
+  require('./api/server').start(client);
+} catch (err) {
+  console.error('[api] Failed to start the dashboard API:', err);
+}
+
 client.login(process.env.BOT_TOKEN);

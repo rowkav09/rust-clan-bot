@@ -2,6 +2,26 @@
 
 const { Events } = require('discord.js');
 const embeds = require('../utils/embeds');
+const { getConfig } = require('../utils/permissions');
+
+// Command → feature module. Disabling a module from the dashboard turns its
+// slash commands off. Admin commands (setup/automation/…) are never gated.
+const COMMAND_MODULES = {
+  checkin: 'tracking', checkout: 'tracking', online: 'tracking', stats: 'tracking',
+  setbattlemetrics: 'tracking', setingamename: 'tracking', setsteam: 'tracking',
+  leaderboard: 'tracking', 'wipe-history': 'tracking',
+  'task-assign': 'tasks', 'task-auto': 'tasks', 'task-delete': 'tasks',
+  'task-list': 'tasks', 'task-status': 'tasks',
+  wipe: 'wipe', raid: 'wipe',
+  serverstatus: 'battlemetrics', popgraph: 'battlemetrics',
+  enemy: 'intel', 'note-add': 'intel', 'note-delete': 'intel', 'note-list': 'intel',
+  poll: 'polls',
+  ally: 'allies',
+  apply: 'clan', 'application-review': 'clan', warn: 'clan', warnings: 'clan',
+  clearwarning: 'clan', 'member-info': 'clan', activity: 'clan',
+  'verify-sync': 'clan', panel: 'clan', rules: 'clan', dashboard: 'clan',
+  rustplus: 'rustplus',
+};
 
 function errorReply(interaction) {
   const embed = embeds.error(
@@ -33,6 +53,19 @@ module.exports = {
         if (!command) {
           return interaction.reply({
             embeds: [embeds.error('Unknown command', 'That command is not registered.')],
+            ephemeral: true,
+          });
+        }
+        const moduleKey = COMMAND_MODULES[interaction.commandName];
+        if (moduleKey && getConfig().modules[moduleKey] === false) {
+          return interaction.reply({
+            embeds: [
+              embeds.error(
+                'Module disabled',
+                `The **${moduleKey}** module is turned off for this server. ` +
+                  'A Leader can re-enable it from the web dashboard.',
+              ),
+            ],
             ephemeral: true,
           });
         }

@@ -4,15 +4,23 @@ const axios = require('axios');
 
 const BASE = 'https://api.battlemetrics.com';
 
-/** True when a BattleMetrics server id is configured (env or wipe.json). */
+/** True when a BattleMetrics server id is configured (config.json, wipe.json or env). */
 function serverId() {
   const db = require('./db');
+  const cfg = db.read('config');
   const wipe = db.read('wipe');
-  return wipe.battlemetricsServerId || process.env.BATTLEMETRICS_SERVER_ID || null;
+  return (
+    cfg.battlemetrics?.serverId ||
+    wipe.battlemetricsServerId ||
+    process.env.BATTLEMETRICS_SERVER_ID ||
+    null
+  );
 }
 
 function authHeaders() {
-  const token = process.env.BATTLEMETRICS_API_TOKEN;
+  const db = require('./db');
+  const cfg = db.read('config');
+  const token = cfg.battlemetrics?.apiToken || process.env.BATTLEMETRICS_API_TOKEN;
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

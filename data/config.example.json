@@ -6,5 +6,25 @@
   "logChannelId": null,
   "applicationChannelId": null,
   "raidChannelId": null,
-  "wipeChannelId": null
+  "wipeChannelId": null,
+  "scoring": {
+    "hours": 10,
+    "raids": 25,
+    "tasks": 15
+  },
+  "modules": {
+    "tracking": true,
+    "tasks": true,
+    "wipe": true,
+    "intel": true,
+    "polls": true,
+    "allies": true,
+    "clan": true,
+    "battlemetrics": true,
+    "rustplus": true
+  },
+  "battlemetrics": {
+    "serverId": null,
+    "apiToken": null
+  }
 }
