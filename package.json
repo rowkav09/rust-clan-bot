@@ -28,5 +28,8 @@
     "discord.js": "^14.15.0",
     "dotenv": "^16.4.5",
     "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "ghost-deps": "^0.1.6"
   }
 }
